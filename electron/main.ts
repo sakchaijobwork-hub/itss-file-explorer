@@ -29,6 +29,7 @@ import { registerTemplatesIpc } from "./features/templates";
 import { registerTrashIpc } from "./features/trash";
 import { registerParallelsIpc } from "./features/parallels";
 import { registerNetworkIpc } from "./features/network";
+import { registerUpdaterIpc } from "./features/updater";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -191,6 +192,7 @@ function buildAppMenu() {
       submenu: [
         { label: "Keyboard Shortcuts", click: () => sendMenuAction("shortcuts-help") },
         { label: "About ITSS File Explorer", click: () => sendMenuAction("about") },
+        { label: "Check for Updates…", click: () => sendMenuAction("check-updates") },
       ],
     },
   ];
@@ -230,6 +232,7 @@ app.whenReady().then(() => {
   registerTrashIpc();
   registerParallelsIpc();
   registerNetworkIpc();
+  registerUpdaterIpc();
 
   buildAppMenu();
   createWindow();

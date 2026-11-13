@@ -25,6 +25,7 @@ import type {
   ContentSearchResult,
   TrashItem,
   ParallelsVm,
+  UpdateStatus,
 } from "./types";
 
 export interface ContextMenuItem {
@@ -162,6 +163,12 @@ export interface FileAPI {
   reconnectParallelsVm: (vmName: string) => Promise<void>;
 
   openSmbShare: (host: string, share?: string, user?: string) => Promise<void>;
+
+  checkForUpdates: () => Promise<void>;
+  downloadUpdate: () => Promise<void>;
+  installUpdate: () => Promise<void>;
+  getCurrentVersion: () => Promise<string>;
+  onUpdateStatus: (callback: (status: UpdateStatus) => void) => () => void;
 }
 
 declare global {

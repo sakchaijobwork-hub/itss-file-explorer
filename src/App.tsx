@@ -4,6 +4,7 @@ import { useUiStore } from "@/store/useUiStore";
 import { useDirectoryLoader } from "@/hooks/useDirectoryLoader";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import { TabsBar } from "@/components/TabsBar";
+import { UpdateBanner } from "@/components/UpdateBanner";
 import { Toolbar } from "@/components/Toolbar";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Sidebar } from "@/components/Sidebar";
@@ -262,6 +263,9 @@ export default function App() {
         case "about":
           openModal("about");
           break;
+        case "check-updates":
+          window.fileAPI.checkForUpdates();
+          break;
       }
     });
     return unsubscribe;
@@ -289,6 +293,7 @@ export default function App() {
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-surface-light text-gray-900 dark:bg-surface-dark dark:text-gray-100">
       <TabsBar />
+      <UpdateBanner />
       <Toolbar onSearch={setSearchQuery} />
       <Breadcrumb />
       <div className="relative flex flex-1 overflow-hidden">

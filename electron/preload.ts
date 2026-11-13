@@ -23,6 +23,7 @@ import type {
 } from "./shared/types";
 import type { TagColor } from "./features/tags";
 import type { FavoriteEntry } from "./features/favorites";
+import type { UpdateStatus } from "./features/updater";
 
 export interface QuickAccessItem {
   name: string;
@@ -239,6 +240,16 @@ const api = {
 
   openSmbShare: (host: string, share?: string, user?: string): Promise<void> =>
     ipcRenderer.invoke("network:openSmbShare", host, share, user),
+
+  checkForUpdates: (): Promise<void> => ipcRenderer.invoke("updater:check"),
+  downloadUpdate: (): Promise<void> => ipcRenderer.invoke("updater:download"),
+  installUpdate: (): Promise<void> => ipcRenderer.invoke("updater:install"),
+  getCurrentVersion: (): Promise<string> => ipcRenderer.invoke("updater:getCurrentVersion"),
+  onUpdateStatus: (callback: (status: UpdateStatus) => void) => {
+    const listener = (_e: unknown, status: UpdateStatus) => callback(status);
+    ipcRenderer.on("updater:status", listener);
+    return () => ipcRenderer.removeListener("updater:status", listener);
+  },
 };
 
 contextBridge.exposeInMainWorld("fileAPI", api);

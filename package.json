@@ -13,13 +13,15 @@
     "preview": "vite preview",
     "dist": "npm run build && electron-builder",
     "dist:mac": "npm run build && electron-builder --mac",
-    "dist:win": "npm run build && electron-builder --win"
+    "dist:win": "npm run build && electron-builder --win",
+    "release:mac": "npm run build && electron-builder --mac --publish never"
   },
   "dependencies": {
     "adm-zip": "^0.6.1",
     "basic-ftp": "^6.2.6",
     "chokidar": "^3.6.0",
     "clsx": "^2.1.1",
+    "electron-updater": "^6.8.11",
     "exifr": "^7.1.3",
     "framer-motion": "^11.11.17",
     "jimp": "^1.6.1",
@@ -57,7 +59,7 @@
     "wait-on": "^8.0.1"
   },
   "build": {
-    "appId": "com.itss.fileexplorer",
+    "appId": "th.co.itss.fileexplorer",
     "productName": "ITSS File Explorer",
     "files": [
       "dist/**/*",
@@ -67,13 +69,24 @@
     "mac": {
       "category": "public.app-category.utilities",
       "target": [
-        "dmg"
-      ]
+        "dmg",
+        "zip"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": true
     },
     "win": {
       "target": [
         "nsis"
       ]
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "sakchaijobwork-hub",
+      "repo": "itss-file-explorer"
     }
   }
 }

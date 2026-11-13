@@ -26,6 +26,7 @@ import {
   Keyboard,
   Info,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileStore } from "@/store/useFileStore";
@@ -80,6 +81,7 @@ export function CommandPalette() {
       { id: "settings", label: "Settings…", icon: Settings, run: () => openModal("settings") },
       { id: "shortcuts-help", label: "Keyboard Shortcuts…", icon: Keyboard, run: () => openModal("shortcuts") },
       { id: "about", label: "About ITSS File Explorer…", icon: Info, run: () => openModal("about") },
+      { id: "check-updates", label: "Check for Updates…", icon: RefreshCw, run: () => window.fileAPI.checkForUpdates() },
       { id: "compare", label: "Compare / Sync Folders…", icon: GitCompare, run: () => openModal("compare") },
       { id: "newWindow", label: "New Window", icon: AppWindow, run: () => window.fileAPI.newWindow() },
       { id: "contentSearch", label: "Search File Contents…", icon: FileSearch, run: () => openModal("contentSearch") },
