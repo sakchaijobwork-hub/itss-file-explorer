@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, Menu, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, shell, Menu, dialog, nativeImage } from "electron";
 import type { MenuItemConstructorOptions } from "electron";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
@@ -20,6 +20,7 @@ import { registerShareIpc } from "./features/share";
 import { registerNotesIpc } from "./features/notes";
 import { registerAutomationIpc } from "./features/automation";
 import { registerPluginsIpc } from "./features/plugins";
+import { registerCompareIpc } from "./features/compare";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -74,6 +75,7 @@ app.whenReady().then(() => {
   registerNotesIpc();
   registerAutomationIpc();
   registerPluginsIpc();
+  registerCompareIpc();
 
   createWindow();
 
@@ -265,6 +267,14 @@ ipcMain.handle(
     });
   }
 );
+
+const dragIconPath = path.join(app.getAppPath(), "electron/assets/drag-icon.png");
+
+ipcMain.on("fs:startDrag", (e, filePaths: string[]) => {
+  if (filePaths.length === 0) return;
+  const icon = nativeImage.createFromPath(dragIconPath);
+  e.sender.startDrag({ file: filePaths[0], files: filePaths, icon });
+});
 
 ipcMain.handle("fs:openPath", (_e, targetPath: string) => shell.openPath(targetPath));
 ipcMain.handle("fs:showInFolder", (_e, targetPath: string) => shell.showItemInFolder(targetPath));

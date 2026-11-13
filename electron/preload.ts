@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type {
   FileEntry,
   OperationProgress,
@@ -13,6 +13,7 @@ import type {
   AutomationRule,
   PluginInfo,
   ShareInfo,
+  CompareResult,
 } from "./shared/types";
 import type { TagColor } from "./features/tags";
 
@@ -53,6 +54,8 @@ const api = {
     ipcRenderer.invoke("fs:move", sourcePaths, destDir, opId),
 
   openPath: (targetPath: string) => ipcRenderer.invoke("fs:openPath", targetPath),
+  startDrag: (filePaths: string[]) => ipcRenderer.send("fs:startDrag", filePaths),
+  getPathForFile: (file: File): string => webUtils.getPathForFile(file),
   showInFolder: (targetPath: string) => ipcRenderer.invoke("fs:showInFolder", targetPath),
 
   watch: (dirPath: string) => ipcRenderer.invoke("fs:watch", dirPath),
@@ -180,6 +183,9 @@ const api = {
   runPlugin: (id: string, context: { selectedPaths: string[]; currentPath: string }) =>
     ipcRenderer.invoke("plugins:run", id, context),
   openPluginsFolder: (): Promise<string> => ipcRenderer.invoke("plugins:openFolder"),
+
+  compareDirs: (pathA: string, pathB: string): Promise<CompareResult> =>
+    ipcRenderer.invoke("fs:compareDirs", pathA, pathB),
 };
 
 contextBridge.exposeInMainWorld("fileAPI", api);

@@ -17,6 +17,7 @@ export type ModalKind =
   | "notes"
   | "automation"
   | "plugins"
+  | "compare"
   | "about";
 
 interface UiState {

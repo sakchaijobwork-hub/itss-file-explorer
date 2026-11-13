@@ -16,6 +16,7 @@ import type {
   AutomationRule,
   PluginInfo,
   ShareInfo,
+  CompareResult,
 } from "./types";
 
 export interface ContextMenuItem {
@@ -42,6 +43,8 @@ export interface FileAPI {
   copy: (sourcePaths: string[], destDir: string, opId: string) => Promise<void>;
   move: (sourcePaths: string[], destDir: string, opId: string) => Promise<void>;
   openPath: (targetPath: string) => Promise<string>;
+  startDrag: (filePaths: string[]) => void;
+  getPathForFile: (file: File) => string;
   showInFolder: (targetPath: string) => Promise<void>;
   watch: (dirPath: string) => Promise<void>;
   unwatch: (dirPath: string) => Promise<void>;
@@ -117,6 +120,8 @@ export interface FileAPI {
   listPlugins: () => Promise<PluginInfo[]>;
   runPlugin: (id: string, context: { selectedPaths: string[]; currentPath: string }) => Promise<unknown>;
   openPluginsFolder: () => Promise<string>;
+
+  compareDirs: (pathA: string, pathB: string) => Promise<CompareResult>;
 }
 
 declare global {

@@ -12,6 +12,7 @@ import { ShareDialog } from "@/components/dialogs/ShareDialog";
 import { NotesDialog } from "@/components/dialogs/NotesDialog";
 import { AutomationDialog } from "@/components/dialogs/AutomationDialog";
 import { PluginsDialog } from "@/components/dialogs/PluginsDialog";
+import { CompareDialog } from "@/components/dialogs/CompareDialog";
 
 export function ModalRoot() {
   const modal = useUiStore((s) => s.modal);
@@ -45,6 +46,8 @@ export function ModalRoot() {
       return <AutomationDialog />;
     case "plugins":
       return <PluginsDialog />;
+    case "compare":
+      return <CompareDialog />;
     default:
       return null;
   }

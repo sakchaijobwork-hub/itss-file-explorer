@@ -147,3 +147,10 @@ export interface ShareInfo {
   qrDataUrl: string;
   paths: string[];
 }
+
+export interface CompareResult {
+  onlyLeft: string[];
+  onlyRight: string[];
+  different: string[];
+  same: string[];
+}

@@ -56,7 +56,8 @@
     "productName": "ITSS File Explorer",
     "files": [
       "dist/**/*",
-      "dist-electron/**/*"
+      "dist-electron/**/*",
+      "electron/assets/**/*"
     ],
     "mac": {
       "category": "public.app-category.utilities",

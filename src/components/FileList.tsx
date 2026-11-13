@@ -147,6 +147,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           { id: "remote", label: "Connect to FTP/SFTP/WebDAV…" },
           { id: "automation", label: "Folder Automation Rules…" },
           { id: "plugins", label: "Plugins…" },
+          { id: "compare", label: "Compare / Sync Folders…" },
         ];
 
     const action = await window.fileAPI.showContextMenu(items);
@@ -241,6 +242,9 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       case "plugins":
         openModal("plugins");
         break;
+      case "compare":
+        openModal("compare");
+        break;
     }
   }
 
@@ -265,6 +269,14 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     );
   }
 
+  async function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    if (!activeTab || e.dataTransfer.files.length === 0) return;
+    const paths = Array.from(e.dataTransfer.files).map((f) => window.fileAPI.getPathForFile(f));
+    const opId = `drop-${Date.now()}`;
+    await window.fileAPI.copy(paths, activeTab.path, opId);
+  }
+
   return (
     <div
       className="flex-1 overflow-y-auto p-2"
@@ -273,6 +285,10 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         e.preventDefault();
         if (e.target === e.currentTarget) showContextMenu(null);
       }}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes("Files")) e.preventDefault();
+      }}
+      onDrop={handleDrop}
     >
       {viewMode === "details" && (
         <DetailsHeader sortKey={sortKey} sortDirection={sortDirection} onSort={setSort} />
@@ -295,6 +311,11 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             tags={tagsMap[entry.path] ?? []}
             onSelect={(e) => select(entry.path, selectMode(e))}
             onOpen={() => handleOpen(entry)}
+            onDragStart={(e) => {
+              e.preventDefault();
+              const paths = selectedPaths.has(entry.path) ? Array.from(selectedPaths) : [entry.path];
+              window.fileAPI.startDrag(paths);
+            }}
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -366,6 +387,7 @@ function FileItem({
   onContextMenu,
   onCommitRename,
   onCancelRename,
+  onDragStart,
 }: {
   entry: FileEntry;
   viewMode: "grid" | "list" | "details";
@@ -378,6 +400,7 @@ function FileItem({
   onContextMenu: (e: React.MouseEvent) => void;
   onCommitRename: (value: string) => void;
   onCancelRename: () => void;
+  onDragStart: (e: React.DragEvent) => void;
 }) {
   const Icon = getFileIconComponent(entry.extension, entry.isDirectory);
   const inputClass =
@@ -405,6 +428,8 @@ function FileItem({
         }}
         onDoubleClick={onOpen}
         onContextMenu={onContextMenu}
+        draggable
+        onDragStart={onDragStart}
         title={entry.name}
       >
         <Icon className={clsx("h-9 w-9", entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")} />
@@ -424,6 +449,8 @@ function FileItem({
         }}
         onDoubleClick={onOpen}
         onContextMenu={onContextMenu}
+        draggable
+        onDragStart={onDragStart}
       >
         <Icon className={clsx("h-4 w-4 shrink-0", entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")} />
         {nameNode}
@@ -442,6 +469,8 @@ function FileItem({
       }}
       onDoubleClick={onOpen}
       onContextMenu={onContextMenu}
+      draggable
+      onDragStart={onDragStart}
     >
       <div className="flex items-center gap-2 overflow-hidden">
         <Icon className={clsx("h-4 w-4 shrink-0", entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")} />

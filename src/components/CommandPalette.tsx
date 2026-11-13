@@ -17,6 +17,7 @@ import {
   Server,
   Zap,
   Puzzle,
+  GitCompare,
 } from "lucide-react";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileStore } from "@/store/useFileStore";
@@ -65,6 +66,7 @@ export function CommandPalette() {
       { id: "remote", label: "Connect to FTP/SFTP/WebDAV…", icon: Server, run: () => openModal("remote") },
       { id: "automation", label: "Folder Automation Rules…", icon: Zap, run: () => openModal("automation") },
       { id: "plugins", label: "Plugins…", icon: Puzzle, run: () => openModal("plugins") },
+      { id: "compare", label: "Compare / Sync Folders…", icon: GitCompare, run: () => openModal("compare") },
     ],
     [setViewMode, createNewFolder, toggleTheme, toggleDualPane, togglePreview, openModal, activeTab]
   );
