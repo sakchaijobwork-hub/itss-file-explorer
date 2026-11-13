@@ -16,6 +16,7 @@ import { CompareDialog } from "@/components/dialogs/CompareDialog";
 import { ContentSearchDialog } from "@/components/dialogs/ContentSearchDialog";
 import { AboutDialog } from "@/components/dialogs/AboutDialog";
 import { ShortcutsDialog } from "@/components/dialogs/ShortcutsDialog";
+import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 
 export function ModalRoot() {
   const modal = useUiStore((s) => s.modal);
@@ -57,6 +58,8 @@ export function ModalRoot() {
       return <AboutDialog />;
     case "shortcuts":
       return <ShortcutsDialog />;
+    case "settings":
+      return <SettingsDialog />;
     default:
       return null;
   }

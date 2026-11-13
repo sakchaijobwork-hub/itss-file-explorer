@@ -20,12 +20,15 @@ export type ModalKind =
   | "compare"
   | "contentSearch"
   | "shortcuts"
+  | "settings"
   | "about";
 
 export type UndoAction =
   | { type: "rename"; oldPath: string; newPath: string }
   | { type: "move"; items: { from: string; to: string }[] }
-  | { type: "copy"; createdPaths: string[] };
+  | { type: "copy"; sourcePaths: string[]; createdPaths: string[]; destDir: string };
+
+const MAX_UNDO_STACK = 20;
 
 interface UiState {
   commandPaletteOpen: boolean;
@@ -36,7 +39,8 @@ interface UiState {
   quickLookPath: string | null;
   gridIconSize: number;
   addressBarEditing: boolean;
-  lastAction: UndoAction | null;
+  undoStack: UndoAction[];
+  redoStack: UndoAction[];
 
   tagsMap: Record<string, TagColor[]>;
 
@@ -49,7 +53,11 @@ interface UiState {
   closeQuickLook: () => void;
   setGridIconSize: (size: number) => void;
   setAddressBarEditing: (editing: boolean) => void;
-  setLastAction: (action: UndoAction | null) => void;
+  pushUndoAction: (action: UndoAction) => void;
+  popUndo: () => UndoAction | undefined;
+  popRedo: () => UndoAction | undefined;
+  pushRedoAction: (action: UndoAction) => void;
+  pushUndoBack: (action: UndoAction) => void;
 
   loadTags: () => Promise<void>;
   toggleTag: (filePath: string, tag: TagColor) => Promise<void>;
@@ -64,7 +72,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   quickLookPath: null,
   gridIconSize: 96,
   addressBarEditing: false,
-  lastAction: null,
+  undoStack: [],
+  redoStack: [],
 
   tagsMap: {},
 
@@ -77,7 +86,25 @@ export const useUiStore = create<UiState>((set, get) => ({
   closeQuickLook: () => set({ quickLookPath: null }),
   setGridIconSize: (size) => set({ gridIconSize: size }),
   setAddressBarEditing: (editing) => set({ addressBarEditing: editing }),
-  setLastAction: (action) => set({ lastAction: action }),
+
+  pushUndoAction: (action) =>
+    set((s) => ({ undoStack: [...s.undoStack, action].slice(-MAX_UNDO_STACK), redoStack: [] })),
+  popUndo: () => {
+    const stack = get().undoStack;
+    if (stack.length === 0) return undefined;
+    const action = stack[stack.length - 1];
+    set({ undoStack: stack.slice(0, -1) });
+    return action;
+  },
+  popRedo: () => {
+    const stack = get().redoStack;
+    if (stack.length === 0) return undefined;
+    const action = stack[stack.length - 1];
+    set({ redoStack: stack.slice(0, -1) });
+    return action;
+  },
+  pushRedoAction: (action) => set((s) => ({ redoStack: [...s.redoStack, action].slice(-MAX_UNDO_STACK) })),
+  pushUndoBack: (action) => set((s) => ({ undoStack: [...s.undoStack, action].slice(-MAX_UNDO_STACK) })),
 
   loadTags: async () => {
     const tagsMap = await window.fileAPI.getAllTags();

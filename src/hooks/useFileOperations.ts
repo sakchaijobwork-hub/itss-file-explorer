@@ -1,7 +1,9 @@
 import { useCallback } from "react";
 import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
+import type { UndoAction } from "@/store/useUiStore";
 import { basename, joinPath } from "@/utils/format";
+import { loadSettings } from "@/utils/settings";
 
 let opCounter = 0;
 
@@ -19,8 +21,13 @@ export function useFileOperations() {
   const startRename = useFileStore((s) => s.startRename);
   const clearSelection = useFileStore((s) => s.clearSelection);
   const select = useFileStore((s) => s.select);
-  const lastAction = useUiStore((s) => s.lastAction);
-  const setLastAction = useUiStore((s) => s.setLastAction);
+  const undoStackLength = useUiStore((s) => s.undoStack.length);
+  const redoStackLength = useUiStore((s) => s.redoStack.length);
+  const pushUndoAction = useUiStore((s) => s.pushUndoAction);
+  const popUndo = useUiStore((s) => s.popUndo);
+  const popRedo = useUiStore((s) => s.popRedo);
+  const pushRedoAction = useUiStore((s) => s.pushRedoAction);
+  const pushUndoBack = useUiStore((s) => s.pushUndoBack);
 
   const currentPath = activeTab?.path ?? "";
 
@@ -37,23 +44,26 @@ export function useFileOperations() {
     const opId = `op-${++opCounter}`;
     if (clipboard.mode === "copy") {
       await window.fileAPI.copy(clipboard.paths, currentPath, opId);
-      setLastAction({
+      pushUndoAction({
         type: "copy",
+        sourcePaths: clipboard.paths,
         createdPaths: clipboard.paths.map((p) => joinPath(currentPath, basename(p))),
+        destDir: currentPath,
       });
     } else if (clipboard.mode === "cut") {
       const items = clipboard.paths.map((p) => ({ from: p, to: joinPath(currentPath, basename(p)) }));
       await window.fileAPI.move(clipboard.paths, currentPath, opId);
-      setLastAction({ type: "move", items });
+      pushUndoAction({ type: "move", items });
       clearClipboard();
     }
-  }, [clipboard, currentPath, clearClipboard, setLastAction]);
+  }, [clipboard, currentPath, clearClipboard, pushUndoAction]);
 
   const deleteSelection = useCallback(async (permanent = false) => {
     const paths = Array.from(selectedPaths);
     if (paths.length === 0) return;
     const names = paths.map((p) => entries.find((e) => e.path === p)?.name ?? p);
-    const confirmed = await window.fileAPI.confirmDelete(names);
+    const needsConfirm = permanent || loadSettings().confirmBeforeTrash;
+    const confirmed = needsConfirm ? await window.fileAPI.confirmDelete(names) : true;
     if (!confirmed) return;
     if (permanent) {
       await window.fileAPI.deletePermanent(paths);
@@ -91,9 +101,9 @@ export function useFileOperations() {
     async (oldPath: string, newName: string) => {
       if (!newName.trim()) return;
       await window.fileAPI.rename(oldPath, newName.trim());
-      setLastAction({ type: "rename", oldPath, newPath: joinPath(dirnameOf(oldPath), newName.trim()) });
+      pushUndoAction({ type: "rename", oldPath, newPath: joinPath(dirnameOf(oldPath), newName.trim()) });
     },
-    [setLastAction]
+    [pushUndoAction]
   );
 
   const openEntry = useCallback(
@@ -104,20 +114,45 @@ export function useFileOperations() {
     []
   );
 
-  const performUndo = useCallback(async () => {
-    if (!lastAction) return;
+  const applyBackward = useCallback(async (action: UndoAction) => {
     const opId = `undo-${++opCounter}`;
-    if (lastAction.type === "rename") {
-      await window.fileAPI.rename(lastAction.newPath, basename(lastAction.oldPath));
-    } else if (lastAction.type === "move") {
-      for (const item of lastAction.items) {
+    if (action.type === "rename") {
+      await window.fileAPI.rename(action.newPath, basename(action.oldPath));
+    } else if (action.type === "move") {
+      for (const item of action.items) {
         await window.fileAPI.move([item.to], dirnameOf(item.from), opId);
       }
-    } else if (lastAction.type === "copy") {
-      await window.fileAPI.deleteToTrash(lastAction.createdPaths);
+    } else if (action.type === "copy") {
+      await window.fileAPI.deleteToTrash(action.createdPaths);
     }
-    setLastAction(null);
-  }, [lastAction, setLastAction]);
+  }, []);
+
+  const applyForward = useCallback(async (action: UndoAction) => {
+    const opId = `redo-${++opCounter}`;
+    if (action.type === "rename") {
+      await window.fileAPI.rename(action.oldPath, basename(action.newPath));
+    } else if (action.type === "move") {
+      for (const item of action.items) {
+        await window.fileAPI.move([item.from], dirnameOf(item.to), opId);
+      }
+    } else if (action.type === "copy") {
+      await window.fileAPI.copy(action.sourcePaths, action.destDir, opId);
+    }
+  }, []);
+
+  const performUndo = useCallback(async () => {
+    const action = popUndo();
+    if (!action) return;
+    await applyBackward(action);
+    pushRedoAction(action);
+  }, [popUndo, applyBackward, pushRedoAction]);
+
+  const performRedo = useCallback(async () => {
+    const action = popRedo();
+    if (!action) return;
+    await applyForward(action);
+    pushUndoBack(action);
+  }, [popRedo, applyForward, pushUndoBack]);
 
   return {
     copySelection,
@@ -129,6 +164,8 @@ export function useFileOperations() {
     renameEntry,
     openEntry,
     performUndo,
-    canUndo: lastAction !== null,
+    performRedo,
+    canUndo: undoStackLength > 0,
+    canRedo: redoStackLength > 0,
   };
 }

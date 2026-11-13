@@ -89,6 +89,22 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
 
   initTabs: (home) => {
     if (get().tabs.length > 0) return;
+
+    try {
+      const raw = localStorage.getItem("itss-session-tabs");
+      if (raw) {
+        const saved = JSON.parse(raw) as { paths: string[]; activeIndex: number };
+        if (Array.isArray(saved.paths) && saved.paths.length > 0) {
+          const tabs = saved.paths.map((p) => ({ id: newTabId(), path: p, history: [p], historyIndex: 0 }));
+          const activeIndex = Math.min(Math.max(saved.activeIndex ?? 0, 0), tabs.length - 1);
+          set({ tabs, activeTabId: tabs[activeIndex].id });
+          return;
+        }
+      }
+    } catch {
+      // ignore malformed session data
+    }
+
     const id = newTabId();
     set({
       tabs: [{ id, path: home, history: [home], historyIndex: 0 }],

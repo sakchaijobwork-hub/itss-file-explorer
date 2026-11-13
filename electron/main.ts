@@ -24,6 +24,7 @@ import { registerCompareIpc } from "./features/compare";
 import { registerOfficeIpc } from "./features/office";
 import { registerFavoritesIpc } from "./features/favorites";
 import { registerSearchIpc } from "./features/search";
+import { loadWindowState, trackWindowState } from "./features/windowState";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -35,9 +36,14 @@ function getTargetWindow(): BrowserWindow | undefined {
 }
 
 function createWindow() {
+  const isFirstWindow = windows.size === 0;
+  const savedState = isFirstWindow ? loadWindowState() : null;
+
   const win = new BrowserWindow({
-    width: 1280,
-    height: 800,
+    width: savedState?.width ?? 1280,
+    height: savedState?.height ?? 800,
+    x: savedState?.x,
+    y: savedState?.y,
     minWidth: 800,
     minHeight: 500,
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
@@ -55,6 +61,11 @@ function createWindow() {
   });
 
   windows.add(win);
+
+  if (isFirstWindow) {
+    if (savedState?.isMaximized) win.maximize();
+    trackWindowState(win);
+  }
 
   if (isDev) {
     win.loadURL("http://localhost:5173");
@@ -118,6 +129,7 @@ function buildAppMenu() {
         // "Undo" is intentionally app-level (last file operation), not text-edit undo —
         // matches Finder/Explorer convention, so no role: "undo"/"redo" here.
         { label: "Undo", accelerator: "CmdOrCtrl+Z", click: () => sendMenuAction("undo") },
+        { label: "Redo", accelerator: "CmdOrCtrl+Shift+Z", click: () => sendMenuAction("redo") },
         { type: "separator" },
         { role: "cut" }, { role: "copy" }, { role: "paste" }, { role: "selectAll" },
         { type: "separator" },
@@ -162,6 +174,8 @@ function buildAppMenu() {
         { type: "separator" },
         { label: "Folder Automation Rules…", click: () => sendMenuAction("automation") },
         { label: "Plugins…", click: () => sendMenuAction("plugins") },
+        { type: "separator" },
+        { label: "Settings…", accelerator: "CmdOrCtrl+,", click: () => sendMenuAction("settings") },
       ],
     },
     {

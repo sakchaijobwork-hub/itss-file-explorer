@@ -23,6 +23,8 @@ const GROUPS: { title: string; items: [string, string][] }[] = [
       [`${mod}C`, "Copy"],
       [`${mod}X`, "Cut"],
       [`${mod}V`, "Paste"],
+      [`${mod}Z`, "Undo"],
+      [`${mod}⇧Z`, "Redo"],
       [`${mod}A`, "Select All"],
       ["Enter", "Rename"],
       ["Delete", "Move to Trash"],

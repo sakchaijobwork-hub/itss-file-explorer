@@ -1,6 +1,11 @@
 import { useEffect, useState } from "react";
+import { marked } from "marked";
 import { getFileIconComponent } from "@/utils/fileIcon";
 import type { DocxPreview, FileEntry, PptxPreview, XlsxPreview } from "@/types";
+
+function sanitizeHtml(html: string): string {
+  return html.replace(/<script[\s\S]*?<\/script>/gi, "").replace(/\son\w+="[^"]*"/gi, "");
+}
 
 const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp"]);
 const VIDEO_EXT = new Set(["mp4", "webm", "mov", "mkv"]);
@@ -127,7 +132,7 @@ export function FilePreviewContent({ entry, large = false }: { entry: FileEntry;
     return (
       <div
         className={`${large ? "max-h-[75vh]" : "max-h-64"} overflow-auto rounded-lg bg-white p-4 text-sm leading-relaxed text-black [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_p]:mb-2 [&_table]:border-collapse [&_td]:border [&_td]:border-gray-300 [&_td]:px-1`}
-        dangerouslySetInnerHTML={{ __html: docx.html }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(docx.html) }}
       />
     );
   }
@@ -180,6 +185,16 @@ export function FilePreviewContent({ entry, large = false }: { entry: FileEntry;
           <div className="text-center text-[10px] text-gray-400">+{pptx.slideCount - pptx.slides.length} more slides</div>
         )}
       </div>
+    );
+  }
+
+  if (textContent && entry.extension === "md") {
+    const html = sanitizeHtml(marked.parse(textContent.content, { async: false }) as string);
+    return (
+      <div
+        className={`${large ? "max-h-[75vh]" : "max-h-64"} overflow-auto rounded-lg bg-white p-4 text-sm leading-relaxed text-black [&_h1]:text-lg [&_h1]:font-bold [&_h2]:text-base [&_h2]:font-semibold [&_a]:text-blue-600 [&_a]:underline [&_code]:rounded [&_code]:bg-gray-100 [&_code]:px-1 [&_pre]:overflow-x-auto [&_pre]:rounded [&_pre]:bg-gray-100 [&_pre]:p-2 [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5`}
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
     );
   }
 

@@ -16,6 +16,7 @@ import { SecondaryPane } from "@/components/SecondaryPane";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ModalRoot } from "@/components/ModalRoot";
 import { QuickLookOverlay } from "@/components/QuickLookOverlay";
+import { loadSettings } from "@/utils/settings";
 
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,9 +37,10 @@ export default function App() {
   const setAddressBarEditing = useUiStore((s) => s.setAddressBarEditing);
   const openModal = useUiStore((s) => s.openModal);
 
-  const { copySelection, cutSelection, paste, deleteSelection, createNewFolder, createNewFile, performUndo } =
+  const { copySelection, cutSelection, paste, deleteSelection, createNewFolder, createNewFile, performUndo, performRedo } =
     useFileOperations();
   const setViewMode = useFileStore((s) => s.setViewMode);
+  const setSort = useFileStore((s) => s.setSort);
   const toggleHidden = useFileStore((s) => s.toggleHidden);
   const toggleTheme = useFileStore((s) => s.toggleTheme);
   const goBack = useFileStore((s) => s.goBack);
@@ -50,12 +52,32 @@ export default function App() {
   const toggleDualPane = useUiStore((s) => s.toggleDualPane);
   const gridIconSize = useUiStore((s) => s.gridIconSize);
   const setGridIconSize = useUiStore((s) => s.setGridIconSize);
+  const tabs = useFileStore((s) => s.tabs);
+  const activeTabId = useFileStore((s) => s.activeTabId);
 
   useDirectoryLoader();
 
   useEffect(() => {
+    if (tabs.length === 0) return;
+    const activeIndex = Math.max(0, tabs.findIndex((t) => t.id === activeTabId));
+    try {
+      localStorage.setItem(
+        "itss-session-tabs",
+        JSON.stringify({ paths: tabs.map((t) => t.path), activeIndex })
+      );
+    } catch {
+      // storage unavailable — session simply won't be restored
+    }
+  }, [tabs, activeTabId]);
+
+  useEffect(() => {
     window.fileAPI.getHome().then(initTabs);
     loadTags();
+    const settings = loadSettings();
+    setViewMode(settings.defaultViewMode);
+    setSort(settings.defaultSortKey, settings.defaultSortDirection);
+    if (settings.showHiddenByDefault) toggleHidden();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initTabs, loadTags]);
 
   useEffect(() => {
@@ -75,6 +97,9 @@ export default function App() {
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
         openModal("contentSearch");
+      } else if (mod && e.shiftKey && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        performRedo();
       } else if (mod && e.key.toLowerCase() === "z") {
         e.preventDefault();
         performUndo();
@@ -122,6 +147,7 @@ export default function App() {
     cutSelection,
     paste,
     performUndo,
+    performRedo,
     selectAll,
     createNewFolder,
     deleteSelection,
@@ -142,6 +168,9 @@ export default function App() {
       switch (action) {
         case "undo":
           performUndo();
+          break;
+        case "redo":
+          performRedo();
           break;
         case "new-tab":
           if (activeTab) openTab(activeTab.path);
@@ -224,6 +253,9 @@ export default function App() {
         case "plugins":
           openModal("plugins");
           break;
+        case "settings":
+          openModal("settings");
+          break;
         case "shortcuts-help":
           openModal("shortcuts");
           break;
@@ -239,6 +271,7 @@ export default function App() {
     createNewFolder,
     createNewFile,
     performUndo,
+    performRedo,
     openModal,
     setViewMode,
     setGridIconSize,

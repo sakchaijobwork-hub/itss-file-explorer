@@ -49,6 +49,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const clipboard = useFileStore((s) => s.clipboard);
   const tagsMap = useUiStore((s) => s.tagsMap);
   const toggleTag = useUiStore((s) => s.toggleTag);
+  const loadTags = useUiStore((s) => s.loadTags);
   const openModal = useUiStore((s) => s.openModal);
   const gridIconSize = useUiStore((s) => s.gridIconSize);
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
@@ -120,7 +121,12 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     const selectionCount = entry ? Math.max(selectedPaths.size, 1) : selectedPaths.size;
     const selectedList = entry && !selectedPaths.has(entry.path) ? [entry.path] : Array.from(selectedPaths);
     const singlePath = selectedList.length === 1 ? selectedList[0] : entry?.path;
-    const currentTags = singlePath ? (tagsMap[singlePath] ?? []) : [];
+    const currentTags =
+      selectedList.length > 1
+        ? TAG_COLORS.filter((tag) => selectedList.every((p) => (tagsMap[p] ?? []).includes(tag)))
+        : singlePath
+          ? (tagsMap[singlePath] ?? [])
+          : [];
 
     const items = entry
       ? [
@@ -208,7 +214,20 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
 
     if (action.startsWith("tag:")) {
       const tag = action.slice(4) as TagColor;
-      if (singlePath) toggleTag(singlePath, tag);
+      if (selectedList.length <= 1) {
+        if (singlePath) toggleTag(singlePath, tag);
+      } else {
+        // Multi-select: if any lack the tag, add it to all; otherwise remove from all.
+        const anyMissing = selectedList.some((p) => !(tagsMap[p] ?? []).includes(tag));
+        for (const p of selectedList) {
+          const current = tagsMap[p] ?? [];
+          const next = anyMissing
+            ? current.includes(tag) ? current : [...current, tag]
+            : current.filter((t) => t !== tag);
+          await window.fileAPI.setTags(p, next);
+        }
+        await loadTags();
+      }
       return;
     }
 

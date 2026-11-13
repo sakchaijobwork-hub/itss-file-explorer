@@ -21,6 +21,8 @@ import {
   AppWindow,
   FileSearch,
   Undo2,
+  Redo2,
+  Settings,
 } from "lucide-react";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileStore } from "@/store/useFileStore";
@@ -46,7 +48,7 @@ export function CommandPalette() {
   const togglePreview = useUiStore((s) => s.togglePreview);
   const toggleDualPane = useUiStore((s) => s.toggleDualPane);
   const openModal = useUiStore((s) => s.openModal);
-  const { createNewFolder, performUndo, canUndo } = useFileOperations();
+  const { createNewFolder, performUndo, canUndo, performRedo, canRedo } = useFileOperations();
 
   const commands = useMemo<Command[]>(
     () => [
@@ -55,6 +57,7 @@ export function CommandPalette() {
       { id: "view-details", label: "View: Details", icon: Rows3, run: () => setViewMode("details") },
       { id: "new-folder", label: "New Folder", icon: FolderPlus, run: () => createNewFolder() },
       ...(canUndo ? [{ id: "undo", label: "Undo Last Action", icon: Undo2, run: () => performUndo() }] : []),
+      ...(canRedo ? [{ id: "redo", label: "Redo", icon: Redo2, run: () => performRedo() }] : []),
       { id: "theme", label: "Toggle Light / Dark Theme", icon: Sun, run: () => toggleTheme() },
       { id: "dual-pane", label: "Toggle Dual Pane", icon: Columns2, run: () => toggleDualPane() },
       { id: "preview", label: "Toggle Preview Panel", icon: Eye, run: () => togglePreview() },
@@ -70,11 +73,12 @@ export function CommandPalette() {
       { id: "remote", label: "Connect to FTP/SFTP/WebDAV…", icon: Server, run: () => openModal("remote") },
       { id: "automation", label: "Folder Automation Rules…", icon: Zap, run: () => openModal("automation") },
       { id: "plugins", label: "Plugins…", icon: Puzzle, run: () => openModal("plugins") },
+      { id: "settings", label: "Settings…", icon: Settings, run: () => openModal("settings") },
       { id: "compare", label: "Compare / Sync Folders…", icon: GitCompare, run: () => openModal("compare") },
       { id: "newWindow", label: "New Window", icon: AppWindow, run: () => window.fileAPI.newWindow() },
       { id: "contentSearch", label: "Search File Contents…", icon: FileSearch, run: () => openModal("contentSearch") },
     ],
-    [setViewMode, createNewFolder, performUndo, canUndo, toggleTheme, toggleDualPane, togglePreview, openModal, activeTab]
+    [setViewMode, createNewFolder, performUndo, canUndo, performRedo, canRedo, toggleTheme, toggleDualPane, togglePreview, openModal, activeTab]
   );
 
   const filtered = useMemo(

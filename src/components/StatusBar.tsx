@@ -1,4 +1,4 @@
-import { Undo2 } from "lucide-react";
+import { Undo2, Redo2 } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import { formatBytes } from "@/utils/format";
@@ -6,7 +6,7 @@ import { formatBytes } from "@/utils/format";
 export function StatusBar() {
   const entries = useFileStore((s) => s.entries);
   const selectedPaths = useFileStore((s) => s.selectedPaths);
-  const { canUndo, performUndo } = useFileOperations();
+  const { canUndo, canRedo, performUndo, performRedo } = useFileOperations();
 
   const selectedCount = selectedPaths.size;
   const totalSize = entries
@@ -20,6 +20,11 @@ export function StatusBar() {
         {canUndo && (
           <button onClick={performUndo} className="flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-black/5 dark:hover:bg-white/10">
             <Undo2 className="h-3 w-3" /> Undo (⌘Z)
+          </button>
+        )}
+        {canRedo && (
+          <button onClick={performRedo} className="flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-black/5 dark:hover:bg-white/10">
+            <Redo2 className="h-3 w-3" /> Redo
           </button>
         )}
       </div>
