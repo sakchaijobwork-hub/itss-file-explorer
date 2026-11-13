@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useFileStore } from "@/store/useFileStore";
+import { useUiStore } from "@/store/useUiStore";
 import { useDirectoryLoader } from "@/hooks/useDirectoryLoader";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import { TabsBar } from "@/components/TabsBar";
@@ -9,6 +10,10 @@ import { Sidebar } from "@/components/Sidebar";
 import { FileList } from "@/components/FileList";
 import { StatusBar } from "@/components/StatusBar";
 import { ProgressToast } from "@/components/ProgressToast";
+import { PreviewPanel } from "@/components/PreviewPanel";
+import { SecondaryPane } from "@/components/SecondaryPane";
+import { CommandPalette } from "@/components/CommandPalette";
+import { ModalRoot } from "@/components/ModalRoot";
 
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,6 +23,10 @@ export default function App() {
   const selectAll = useFileStore((s) => s.selectAll);
   const startRename = useFileStore((s) => s.startRename);
   const renamingPath = useFileStore((s) => s.renamingPath);
+  const dualPane = useUiStore((s) => s.dualPane);
+  const commandPaletteOpen = useUiStore((s) => s.commandPaletteOpen);
+  const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen);
+  const loadTags = useUiStore((s) => s.loadTags);
 
   const { copySelection, cutSelection, paste, deleteSelection, createNewFolder } = useFileOperations();
 
@@ -25,7 +34,8 @@ export default function App() {
 
   useEffect(() => {
     window.fileAPI.getHome().then(initTabs);
-  }, [initTabs]);
+    loadTags();
+  }, [initTabs, loadTags]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -35,7 +45,10 @@ export default function App() {
     function onKeyDown(e: KeyboardEvent) {
       if (renamingPath) return;
       const mod = e.metaKey || e.ctrlKey;
-      if (mod && e.key.toLowerCase() === "c") {
+      if (mod && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen(!commandPaletteOpen);
+      } else if (mod && e.key.toLowerCase() === "c") {
         e.preventDefault();
         copySelection();
       } else if (mod && e.key.toLowerCase() === "x") {
@@ -60,7 +73,19 @@ export default function App() {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [copySelection, cutSelection, paste, selectAll, createNewFolder, deleteSelection, selectedPaths, startRename, renamingPath]);
+  }, [
+    copySelection,
+    cutSelection,
+    paste,
+    selectAll,
+    createNewFolder,
+    deleteSelection,
+    selectedPaths,
+    startRename,
+    renamingPath,
+    commandPaletteOpen,
+    setCommandPaletteOpen,
+  ]);
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-surface-light text-gray-900 dark:bg-surface-dark dark:text-gray-100">
@@ -70,9 +95,13 @@ export default function App() {
       <div className="relative flex flex-1 overflow-hidden">
         <Sidebar />
         <FileList searchQuery={searchQuery} />
+        {dualPane && <SecondaryPane />}
+        <PreviewPanel />
         <ProgressToast />
       </div>
       <StatusBar />
+      <CommandPalette />
+      <ModalRoot />
     </div>
   );
 }

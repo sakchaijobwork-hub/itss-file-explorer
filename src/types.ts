@@ -40,3 +40,53 @@ export interface Tab {
   history: string[];
   historyIndex: number;
 }
+
+export const TAG_COLORS = ["red", "orange", "yellow", "green", "blue", "purple", "gray"] as const;
+export type TagColor = (typeof TAG_COLORS)[number];
+
+export interface DuplicateGroup {
+  hash: string;
+  size: number;
+  paths: string[];
+}
+
+export interface DirStatsNode {
+  name: string;
+  path: string;
+  size: number;
+  isDirectory: boolean;
+  children?: DirStatsNode[];
+}
+
+export interface PermissionsInfo {
+  path: string;
+  mode: string;
+  octal: string;
+  readable: boolean;
+  writable: boolean;
+  executable: boolean;
+  owner?: string;
+}
+
+export interface GitFileStatus {
+  path: string;
+  status: string;
+}
+
+export interface GitStatusResult {
+  isRepo: boolean;
+  branch?: string;
+  files: GitFileStatus[];
+}
+
+export interface TextPreviewResult {
+  path: string;
+  content: string;
+  truncated: boolean;
+  encoding: "utf8" | "binary";
+}
+
+export interface RecentEntry {
+  path: string;
+  openedAt: number;
+}

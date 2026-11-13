@@ -2,11 +2,23 @@ import { useMemo } from "react";
 import clsx from "clsx";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { useFileStore, sortEntries } from "@/store/useFileStore";
+import { useUiStore } from "@/store/useUiStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import { getFileIconComponent } from "@/utils/fileIcon";
 import { formatBytes, formatDate } from "@/utils/format";
 import { RenameInput } from "./RenameInput";
-import type { FileEntry, SortKey } from "@/types";
+import type { FileEntry, SortKey, TagColor } from "@/types";
+import { TAG_COLORS } from "@/types";
+
+const TAG_HEX: Record<TagColor, string> = {
+  red: "#ef4444",
+  orange: "#f97316",
+  yellow: "#eab308",
+  green: "#22c55e",
+  blue: "#3b82f6",
+  purple: "#a855f7",
+  gray: "#9ca3af",
+};
 
 function selectMode(e: React.MouseEvent): "single" | "toggle" | "range" {
   if (e.shiftKey) return "range";
@@ -32,6 +44,10 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const navigateTo = useFileStore((s) => s.navigateTo);
   const setClipboard = useFileStore((s) => s.setClipboard);
   const clipboard = useFileStore((s) => s.clipboard);
+  const tagsMap = useUiStore((s) => s.tagsMap);
+  const toggleTag = useUiStore((s) => s.toggleTag);
+  const openModal = useUiStore((s) => s.openModal);
+  const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
 
   const { renameEntry, openEntry, deleteSelection, copySelection, cutSelection, paste } =
     useFileOperations();
@@ -53,27 +69,78 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
 
   async function showContextMenu(entry: FileEntry | null) {
     if (entry && !selectedPaths.has(entry.path)) select(entry.path, "single");
-    const hasSelection = entry ? true : selectedPaths.size > 0;
+    const selectionCount = entry ? Math.max(selectedPaths.size, 1) : selectedPaths.size;
+    const selectedList = entry && !selectedPaths.has(entry.path) ? [entry.path] : Array.from(selectedPaths);
+    const singlePath = selectedList.length === 1 ? selectedList[0] : entry?.path;
+    const currentTags = singlePath ? (tagsMap[singlePath] ?? []) : [];
+
     const items = entry
       ? [
-          { id: "open", label: entry.isDirectory ? "Open" : "Open" },
-          { id: "showInFolder", label: "Show in Folder" },
+          { id: "open", label: "Open" },
+          { id: "showInFolder", label: "Show in Finder/Explorer" },
           { type: "separator" as const, id: "sep1", label: "" },
           { id: "cut", label: "Cut" },
           { id: "copy", label: "Copy" },
           { id: "paste", label: "Paste", enabled: clipboard.paths.length > 0 },
           { type: "separator" as const, id: "sep2", label: "" },
-          { id: "rename", label: "Rename" },
+          { id: "rename", label: "Rename", enabled: selectionCount === 1 },
+          {
+            id: "batchRename",
+            label: "Batch Rename…",
+            enabled: selectionCount > 1,
+          },
+          { type: "separator" as const, id: "sep3", label: "" },
+          {
+            id: "tags",
+            label: "Tags",
+            submenu: TAG_COLORS.map((tag) => ({
+              id: `tag:${tag}`,
+              label: tag[0].toUpperCase() + tag.slice(1),
+              checked: currentTags.includes(tag),
+            })),
+          },
+          {
+            id: "compress",
+            label: "Compress to Zip",
+          },
+          {
+            id: "extract",
+            label: "Extract Here",
+            enabled: selectionCount === 1 && entry.extension === "zip",
+          },
+          { type: "separator" as const, id: "sep4", label: "" },
+          { id: "checksum", label: "Verify Checksum (2 files)…", enabled: selectionCount === 2 },
+          { id: "permissions", label: "Permissions…", enabled: selectionCount === 1 },
+          {
+            id: "encrypt",
+            label: "Encrypt…",
+            enabled: !entry.isDirectory,
+          },
+          {
+            id: "decrypt",
+            label: "Decrypt…",
+            enabled: selectionCount === 1 && entry.extension === "enc",
+          },
+          { type: "separator" as const, id: "sep5", label: "" },
           { id: "delete", label: "Move to Trash" },
+          { id: "shred", label: "Shred (permanently delete)" },
         ]
       : [
           { id: "newFolder", label: "New Folder" },
           { id: "newFile", label: "New File" },
           { id: "paste", label: "Paste", enabled: clipboard.paths.length > 0 },
+          { type: "separator" as const, id: "sep1", label: "" },
+          { id: "openTerminal", label: "Open Terminal Here" },
         ];
 
     const action = await window.fileAPI.showContextMenu(items);
     if (!action) return;
+
+    if (action.startsWith("tag:")) {
+      const tag = action.slice(4) as TagColor;
+      if (singlePath) toggleTag(singlePath, tag);
+      return;
+    }
 
     switch (action) {
       case "open":
@@ -94,11 +161,50 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       case "rename":
         if (entry) startRename(entry.path);
         break;
+      case "batchRename":
+        openModal("batchRename");
+        break;
+      case "compress": {
+        if (!activeTab) break;
+        const defaultPath = `${activeTab.path}/${entry?.name ?? "archive"}.zip`;
+        const dest = await window.fileAPI.saveDialog(defaultPath, [{ name: "Zip Archive", extensions: ["zip"] }]);
+        if (dest) await window.fileAPI.compress(selectedList, dest);
+        break;
+      }
+      case "extract": {
+        if (!entry || !activeTab) break;
+        await window.fileAPI.extract(entry.path, activeTab.path);
+        break;
+      }
+      case "checksum": {
+        if (selectedList.length === 2) {
+          const result = await window.fileAPI.verifyChecksum(selectedList[0], selectedList[1]);
+          alert(result.match ? "Files are identical (checksum match)." : "Files differ (checksum mismatch).");
+        }
+        break;
+      }
+      case "permissions":
+        if (singlePath) openModal("permissions", [singlePath]);
+        break;
+      case "encrypt":
+        openModal("encrypt", selectedList);
+        break;
+      case "decrypt":
+        if (singlePath) openModal("decrypt", [singlePath]);
+        break;
       case "delete":
         deleteSelection(false);
         break;
+      case "shred": {
+        const names = selectedList.map((p) => p.split(/[/\\]/).pop() ?? p);
+        const confirmed = await window.fileAPI.confirmDelete(names);
+        if (confirmed) await window.fileAPI.shred(selectedList);
+        break;
+      }
+      case "openTerminal":
+        if (activeTab) window.fileAPI.openTerminal(activeTab.path);
+        break;
     }
-    void hasSelection;
   }
 
   if (loading && entries.length === 0) {
@@ -149,6 +255,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             isSelected={selectedPaths.has(entry.path)}
             isCut={clipboard.mode === "cut" && clipboard.paths.includes(entry.path)}
             isRenaming={renamingPath === entry.path}
+            tags={tagsMap[entry.path] ?? []}
             onSelect={(e) => select(entry.path, selectMode(e))}
             onOpen={() => handleOpen(entry)}
             onContextMenu={(e) => {
@@ -199,12 +306,24 @@ function DetailsHeader({
   );
 }
 
+function TagDots({ tags }: { tags: TagColor[] }) {
+  if (tags.length === 0) return null;
+  return (
+    <div className="flex items-center gap-0.5">
+      {tags.map((tag) => (
+        <span key={tag} className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TAG_HEX[tag] }} />
+      ))}
+    </div>
+  );
+}
+
 function FileItem({
   entry,
   viewMode,
   isSelected,
   isCut,
   isRenaming,
+  tags,
   onSelect,
   onOpen,
   onContextMenu,
@@ -216,6 +335,7 @@ function FileItem({
   isSelected: boolean;
   isCut: boolean;
   isRenaming: boolean;
+  tags: TagColor[];
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
@@ -252,6 +372,7 @@ function FileItem({
       >
         <Icon className={clsx("h-9 w-9", entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")} />
         <div className="w-full text-[11px] leading-tight text-gray-800 dark:text-gray-200">{nameNode}</div>
+        <TagDots tags={tags} />
       </div>
     );
   }
@@ -269,6 +390,7 @@ function FileItem({
       >
         <Icon className={clsx("h-4 w-4 shrink-0", entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")} />
         {nameNode}
+        <TagDots tags={tags} />
       </div>
     );
   }
@@ -287,6 +409,7 @@ function FileItem({
       <div className="flex items-center gap-2 overflow-hidden">
         <Icon className={clsx("h-4 w-4 shrink-0", entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")} />
         {nameNode}
+        <TagDots tags={tags} />
       </div>
       <div className="text-xs text-gray-500">{entry.isDirectory ? "—" : formatBytes(entry.size)}</div>
       <div className="text-xs text-gray-500">{formatDate(entry.modifiedAt)}</div>

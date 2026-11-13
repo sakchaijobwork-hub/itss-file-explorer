@@ -17,9 +17,16 @@ import {
   Eye,
   EyeOff,
   Search,
+  Columns2,
+  Copy as CopyIcon,
+  HardDrive,
+  Terminal,
+  Clock,
+  Command,
 } from "lucide-react";
 import clsx from "clsx";
 import { useFileStore } from "@/store/useFileStore";
+import { useUiStore } from "@/store/useUiStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
 
 function ToolbarButton({
@@ -68,6 +75,13 @@ export function Toolbar({ onSearch }: { onSearch: (q: string) => void }) {
   const selectedPaths = useFileStore((s) => s.selectedPaths);
   const clipboard = useFileStore((s) => s.clipboard);
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
+
+  const dualPane = useUiStore((s) => s.dualPane);
+  const toggleDualPane = useUiStore((s) => s.toggleDualPane);
+  const previewOpen = useUiStore((s) => s.previewOpen);
+  const togglePreview = useUiStore((s) => s.togglePreview);
+  const openModal = useUiStore((s) => s.openModal);
+  const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen);
 
   const { copySelection, cutSelection, paste, deleteSelection, createNewFolder, createNewFile } =
     useFileOperations();
@@ -144,6 +158,30 @@ export function Toolbar({ onSearch }: { onSearch: (q: string) => void }) {
       </ToolbarButton>
       <ToolbarButton onClick={toggleTheme} title="Toggle Theme">
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+      </ToolbarButton>
+
+      <div className="mx-1 h-5 w-px bg-black/10 dark:bg-white/10" />
+
+      <ToolbarButton onClick={togglePreview} active={previewOpen} title="Toggle Preview Panel">
+        <Eye className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={toggleDualPane} active={dualPane} title="Toggle Dual Pane">
+        <Columns2 className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={() => openModal("duplicates")} title="Find Duplicate Files">
+        <CopyIcon className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={() => openModal("storage")} title="Analyze Storage">
+        <HardDrive className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={() => openModal("recents")} title="Recent Files">
+        <Clock className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={() => activeTab && window.fileAPI.openTerminal(activeTab.path)} title="Open Terminal Here">
+        <Terminal className="h-4 w-4" />
+      </ToolbarButton>
+      <ToolbarButton onClick={() => setCommandPaletteOpen(true)} title="Command Palette (⌘K)">
+        <Command className="h-4 w-4" />
       </ToolbarButton>
     </div>
   );

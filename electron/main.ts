@@ -1,9 +1,18 @@
 import { app, BrowserWindow, ipcMain, shell, Menu, dialog } from "electron";
+import type { MenuItemConstructorOptions } from "electron";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import chokidar, { FSWatcher } from "chokidar";
 import type { FileEntry, ReadDirResult } from "./shared/types";
+import { registerTagsIpc } from "./features/tags";
+import { registerRecentsIpc } from "./features/recents";
+import { registerHashingIpc } from "./features/hashing";
+import { registerStorageIpc } from "./features/storage";
+import { registerArchiveIpc } from "./features/archive";
+import { registerSecurityIpc } from "./features/security";
+import { registerSystemIpc } from "./features/system";
+import { registerPreviewIpc } from "./features/preview";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -43,6 +52,15 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  registerTagsIpc();
+  registerRecentsIpc();
+  registerHashingIpc();
+  registerStorageIpc();
+  registerArchiveIpc();
+  registerSecurityIpc();
+  registerSystemIpc();
+  registerPreviewIpc();
+
   createWindow();
 
   app.on("activate", () => {
@@ -264,25 +282,55 @@ ipcMain.handle("fs:unwatch", (_e, dirPath: string) => {
 
 // ---------- IPC: native dialogs / menus ----------
 
-ipcMain.handle(
-  "ui:contextMenu",
-  (e, items: { id: string; label: string; enabled?: boolean; type?: "separator" }[]) => {
-    return new Promise<string | null>((resolve) => {
-      const menu = Menu.buildFromTemplate(
-        items.map((item) =>
-          item.type === "separator"
-            ? { type: "separator" as const }
-            : {
-                label: item.label,
-                enabled: item.enabled ?? true,
-                click: () => resolve(item.id),
-              }
-        )
-      );
-      menu.popup({ window: BrowserWindow.fromWebContents(e.sender) ?? undefined, callback: () => resolve(null) });
-    });
-  }
-);
+interface ContextMenuItem {
+  id: string;
+  label: string;
+  enabled?: boolean;
+  type?: "separator";
+  checked?: boolean;
+  submenu?: ContextMenuItem[];
+}
+
+function buildMenuTemplate(
+  items: ContextMenuItem[],
+  resolve: (id: string | null) => void
+): MenuItemConstructorOptions[] {
+  return items.map((item) =>
+    item.type === "separator"
+      ? { type: "separator" as const }
+      : item.submenu
+        ? { label: item.label, submenu: buildMenuTemplate(item.submenu, resolve) }
+        : {
+            label: item.label,
+            enabled: item.enabled ?? true,
+            type: item.checked !== undefined ? ("checkbox" as const) : undefined,
+            checked: item.checked,
+            click: () => resolve(item.id),
+          }
+  );
+}
+
+ipcMain.handle("ui:contextMenu", (e, items: ContextMenuItem[]) => {
+  return new Promise<string | null>((resolve) => {
+    const menu = Menu.buildFromTemplate(buildMenuTemplate(items, resolve));
+    menu.popup({ window: BrowserWindow.fromWebContents(e.sender) ?? undefined, callback: () => resolve(null) });
+  });
+});
+
+ipcMain.handle("ui:saveDialog", async (e, defaultPath: string, filters?: { name: string; extensions: string[] }[]) => {
+  const win = BrowserWindow.fromWebContents(e.sender) ?? undefined;
+  const result = await dialog.showSaveDialog(win as BrowserWindow, { defaultPath, filters });
+  return result.canceled ? null : result.filePath;
+});
+
+ipcMain.handle("ui:openDirectoryDialog", async (e, defaultPath?: string) => {
+  const win = BrowserWindow.fromWebContents(e.sender) ?? undefined;
+  const result = await dialog.showOpenDialog(win as BrowserWindow, {
+    defaultPath,
+    properties: ["openDirectory"],
+  });
+  return result.canceled ? null : result.filePaths[0];
+});
 
 ipcMain.handle("ui:confirmDelete", async (e, names: string[]) => {
   const win = BrowserWindow.fromWebContents(e.sender) ?? undefined;

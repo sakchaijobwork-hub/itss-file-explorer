@@ -1,10 +1,24 @@
-import { ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronRight, GitBranch } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
 import { splitPathSegments } from "@/utils/format";
+import type { GitStatusResult } from "@/types";
 
 export function Breadcrumb() {
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
   const navigateTo = useFileStore((s) => s.navigateTo);
+  const [git, setGit] = useState<GitStatusResult | null>(null);
+
+  useEffect(() => {
+    if (!activeTab) return;
+    let cancelled = false;
+    window.fileAPI.getGitStatus(activeTab.path).then((res) => {
+      if (!cancelled) setGit(res);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTab?.path]);
 
   if (!activeTab) return null;
   const segments = splitPathSegments(activeTab.path);
@@ -22,6 +36,13 @@ export function Breadcrumb() {
           </button>
         </div>
       ))}
+      {git?.isRepo && git.branch && (
+        <div className="ml-2 flex shrink-0 items-center gap-1 rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-gray-500 dark:bg-white/10 dark:text-gray-400">
+          <GitBranch className="h-3 w-3" />
+          {git.branch}
+          {git.files.length > 0 && <span className="text-accent">· {git.files.length}</span>}
+        </div>
+      )}
     </div>
   );
 }

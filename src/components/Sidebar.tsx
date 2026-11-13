@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { HardDrive, Home, Star } from "lucide-react";
+import { Clock, HardDrive, Home, Star } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
+import { useUiStore } from "@/store/useUiStore";
 import type { QuickAccessItem } from "@/types";
 import clsx from "clsx";
 
@@ -30,6 +31,7 @@ export function Sidebar() {
   const [quickAccess, setQuickAccess] = useState<QuickAccessItem[]>([]);
   const [drives, setDrives] = useState<QuickAccessItem[]>([]);
   const [home, setHome] = useState<string>("");
+  const openModal = useUiStore((s) => s.openModal);
 
   useEffect(() => {
     window.fileAPI.getHome().then(setHome);
@@ -48,6 +50,13 @@ export function Sidebar() {
           {quickAccess.map((item) => (
             <SidebarItem key={item.path} label={item.name} path={item.path} icon={Star} />
           ))}
+          <button
+            onClick={() => openModal("recents")}
+            className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] text-gray-700 hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/5"
+          >
+            <Clock className="h-4 w-4 shrink-0" />
+            <span className="truncate">Recents</span>
+          </button>
         </div>
       </div>
 

@@ -16,6 +16,7 @@
     "dist:win": "npm run build && electron-builder --win"
   },
   "dependencies": {
+    "adm-zip": "^0.6.1",
     "chokidar": "^3.6.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.11.17",
@@ -26,6 +27,7 @@
     "zustand": "^5.0.1"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
@@ -50,10 +52,14 @@
     ],
     "mac": {
       "category": "public.app-category.utilities",
-      "target": ["dmg"]
+      "target": [
+        "dmg"
+      ]
     },
     "win": {
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ]
     }
   }
 }

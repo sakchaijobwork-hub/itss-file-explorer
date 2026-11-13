@@ -81,6 +81,7 @@ export function useFileOperations() {
   const openEntry = useCallback(
     (path: string) => {
       window.fileAPI.openPath(path);
+      window.fileAPI.addRecent(path);
     },
     []
   );
