@@ -14,6 +14,9 @@ import {
   Terminal,
   Clock,
   Search,
+  Server,
+  Zap,
+  Puzzle,
 } from "lucide-react";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileStore } from "@/store/useFileStore";
@@ -59,6 +62,9 @@ export function CommandPalette() {
         icon: Terminal,
         run: () => activeTab && window.fileAPI.openTerminal(activeTab.path),
       },
+      { id: "remote", label: "Connect to FTP/SFTP/WebDAV…", icon: Server, run: () => openModal("remote") },
+      { id: "automation", label: "Folder Automation Rules…", icon: Zap, run: () => openModal("automation") },
+      { id: "plugins", label: "Plugins…", icon: Puzzle, run: () => openModal("plugins") },
     ],
     [setViewMode, createNewFolder, toggleTheme, toggleDualPane, togglePreview, openModal, activeTab]
   );

@@ -10,6 +10,12 @@ import type {
   GitStatusResult,
   TextPreviewResult,
   RecentEntry,
+  RemoteConnectionConfig,
+  RemoteEntry,
+  ExifData,
+  AutomationRule,
+  PluginInfo,
+  ShareInfo,
 } from "./types";
 
 export interface ContextMenuItem {
@@ -75,6 +81,42 @@ export interface FileAPI {
   getGitStatus: (dirPath: string) => Promise<GitStatusResult>;
 
   readTextPreview: (filePath: string) => Promise<TextPreviewResult>;
+
+  remoteConnect: (config: RemoteConnectionConfig) => Promise<string>;
+  remoteListDir: (id: string, dirPath: string) => Promise<RemoteEntry[]>;
+  remoteDownload: (id: string, remotePath: string, localPath: string) => Promise<void>;
+  remoteUpload: (id: string, localPath: string, remotePath: string) => Promise<void>;
+  remoteMkdir: (id: string, dirPath: string) => Promise<void>;
+  remoteRemove: (id: string, targetPath: string, isDirectory: boolean) => Promise<void>;
+  remoteDisconnect: (id: string) => Promise<void>;
+
+  getExif: (filePath: string) => Promise<ExifData | null>;
+  resizeImage: (srcPath: string, destDir: string, width: number, height?: number) => Promise<string>;
+  rotateImage: (srcPath: string, destDir: string, degrees: number) => Promise<string>;
+  convertImage: (srcPath: string, destDir: string, format: "png" | "jpeg" | "webp" | "bmp") => Promise<string>;
+  batchImageOp: (
+    paths: string[],
+    destDir: string,
+    op: { kind: "resize" | "rotate" | "convert"; width?: number; height?: number; degrees?: number; format?: "png" | "jpeg" | "webp" | "bmp" }
+  ) => Promise<string[]>;
+
+  splitFile: (filePath: string, chunkSizeBytes: number, destDir: string) => Promise<string[]>;
+  mergeFiles: (partPaths: string[], destPath: string) => Promise<string>;
+
+  startShare: (paths: string[]) => Promise<ShareInfo>;
+  stopShare: () => Promise<void>;
+
+  getAllNotes: () => Promise<Record<string, string>>;
+  setNote: (filePath: string, text: string) => Promise<Record<string, string>>;
+
+  listAutomationRules: () => Promise<AutomationRule[]>;
+  addAutomationRule: (rule: AutomationRule) => Promise<AutomationRule[]>;
+  removeAutomationRule: (id: string) => Promise<AutomationRule[]>;
+  toggleAutomationRule: (id: string) => Promise<AutomationRule[]>;
+
+  listPlugins: () => Promise<PluginInfo[]>;
+  runPlugin: (id: string, context: { selectedPaths: string[]; currentPath: string }) => Promise<unknown>;
+  openPluginsFolder: () => Promise<string>;
 }
 
 declare global {

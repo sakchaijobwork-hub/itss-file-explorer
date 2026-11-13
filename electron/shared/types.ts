@@ -74,3 +74,60 @@ export interface TextPreviewResult {
   truncated: boolean;
   encoding: "utf8" | "binary";
 }
+
+export type RemoteProtocol = "ftp" | "sftp" | "webdav";
+
+export interface RemoteConnectionConfig {
+  protocol: RemoteProtocol;
+  host: string;
+  port?: number;
+  user: string;
+  password: string;
+  secure?: boolean;
+  url?: string; // webdav base url
+}
+
+export interface RemoteEntry {
+  name: string;
+  path: string;
+  isDirectory: boolean;
+  size: number;
+  modifiedAt: number;
+}
+
+export interface ExifData {
+  make?: string;
+  model?: string;
+  dateTaken?: string;
+  gpsLatitude?: number;
+  gpsLongitude?: number;
+  width?: number;
+  height?: number;
+  iso?: number;
+  fNumber?: number;
+  exposureTime?: number;
+  focalLength?: number;
+}
+
+export interface AutomationRule {
+  id: string;
+  watchDir: string;
+  pattern: string;
+  action: "move" | "tag" | "rename";
+  destDir?: string;
+  tag?: string;
+  renamePattern?: string;
+  enabled: boolean;
+}
+
+export interface PluginInfo {
+  id: string;
+  label: string;
+  fileName: string;
+}
+
+export interface ShareInfo {
+  url: string;
+  qrDataUrl: string;
+  paths: string[];
+}

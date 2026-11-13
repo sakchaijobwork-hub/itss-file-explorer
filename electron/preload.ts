@@ -7,6 +7,12 @@ import type {
   PermissionsInfo,
   GitStatusResult,
   TextPreviewResult,
+  RemoteConnectionConfig,
+  RemoteEntry,
+  ExifData,
+  AutomationRule,
+  PluginInfo,
+  ShareInfo,
 } from "./shared/types";
 import type { TagColor } from "./features/tags";
 
@@ -119,6 +125,61 @@ const api = {
   // preview
   readTextPreview: (filePath: string): Promise<TextPreviewResult> =>
     ipcRenderer.invoke("fs:readTextPreview", filePath),
+
+  // remote (FTP/SFTP/WebDAV)
+  remoteConnect: (config: RemoteConnectionConfig): Promise<string> => ipcRenderer.invoke("remote:connect", config),
+  remoteListDir: (id: string, dirPath: string): Promise<RemoteEntry[]> =>
+    ipcRenderer.invoke("remote:listDir", id, dirPath),
+  remoteDownload: (id: string, remotePath: string, localPath: string): Promise<void> =>
+    ipcRenderer.invoke("remote:download", id, remotePath, localPath),
+  remoteUpload: (id: string, localPath: string, remotePath: string): Promise<void> =>
+    ipcRenderer.invoke("remote:upload", id, localPath, remotePath),
+  remoteMkdir: (id: string, dirPath: string): Promise<void> => ipcRenderer.invoke("remote:mkdir", id, dirPath),
+  remoteRemove: (id: string, targetPath: string, isDirectory: boolean): Promise<void> =>
+    ipcRenderer.invoke("remote:remove", id, targetPath, isDirectory),
+  remoteDisconnect: (id: string): Promise<void> => ipcRenderer.invoke("remote:disconnect", id),
+
+  // images
+  getExif: (filePath: string): Promise<ExifData | null> => ipcRenderer.invoke("image:getExif", filePath),
+  resizeImage: (srcPath: string, destDir: string, width: number, height?: number): Promise<string> =>
+    ipcRenderer.invoke("image:resize", srcPath, destDir, width, height),
+  rotateImage: (srcPath: string, destDir: string, degrees: number): Promise<string> =>
+    ipcRenderer.invoke("image:rotate", srcPath, destDir, degrees),
+  convertImage: (srcPath: string, destDir: string, format: "png" | "jpeg" | "webp" | "bmp"): Promise<string> =>
+    ipcRenderer.invoke("image:convert", srcPath, destDir, format),
+  batchImageOp: (
+    paths: string[],
+    destDir: string,
+    op: { kind: "resize" | "rotate" | "convert"; width?: number; height?: number; degrees?: number; format?: "png" | "jpeg" | "webp" | "bmp" }
+  ): Promise<string[]> => ipcRenderer.invoke("image:batch", paths, destDir, op),
+
+  // split / merge
+  splitFile: (filePath: string, chunkSizeBytes: number, destDir: string): Promise<string[]> =>
+    ipcRenderer.invoke("fs:splitFile", filePath, chunkSizeBytes, destDir),
+  mergeFiles: (partPaths: string[], destPath: string): Promise<string> =>
+    ipcRenderer.invoke("fs:mergeFiles", partPaths, destPath),
+
+  // local network share
+  startShare: (paths: string[]): Promise<ShareInfo> => ipcRenderer.invoke("share:start", paths),
+  stopShare: (): Promise<void> => ipcRenderer.invoke("share:stop"),
+
+  // notes
+  getAllNotes: (): Promise<Record<string, string>> => ipcRenderer.invoke("notes:getAll"),
+  setNote: (filePath: string, text: string): Promise<Record<string, string>> =>
+    ipcRenderer.invoke("notes:set", filePath, text),
+
+  // automation
+  listAutomationRules: (): Promise<AutomationRule[]> => ipcRenderer.invoke("automation:list"),
+  addAutomationRule: (rule: AutomationRule): Promise<AutomationRule[]> =>
+    ipcRenderer.invoke("automation:add", rule),
+  removeAutomationRule: (id: string): Promise<AutomationRule[]> => ipcRenderer.invoke("automation:remove", id),
+  toggleAutomationRule: (id: string): Promise<AutomationRule[]> => ipcRenderer.invoke("automation:toggle", id),
+
+  // plugins
+  listPlugins: (): Promise<PluginInfo[]> => ipcRenderer.invoke("plugins:list"),
+  runPlugin: (id: string, context: { selectedPaths: string[]; currentPath: string }) =>
+    ipcRenderer.invoke("plugins:run", id, context),
+  openPluginsFolder: (): Promise<string> => ipcRenderer.invoke("plugins:openFolder"),
 };
 
 contextBridge.exposeInMainWorld("fileAPI", api);

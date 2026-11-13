@@ -13,6 +13,13 @@ import { registerArchiveIpc } from "./features/archive";
 import { registerSecurityIpc } from "./features/security";
 import { registerSystemIpc } from "./features/system";
 import { registerPreviewIpc } from "./features/preview";
+import { registerRemoteIpc } from "./features/remote";
+import { registerImagesIpc } from "./features/images";
+import { registerSplitMergeIpc } from "./features/splitMerge";
+import { registerShareIpc } from "./features/share";
+import { registerNotesIpc } from "./features/notes";
+import { registerAutomationIpc } from "./features/automation";
+import { registerPluginsIpc } from "./features/plugins";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -60,6 +67,13 @@ app.whenReady().then(() => {
   registerSecurityIpc();
   registerSystemIpc();
   registerPreviewIpc();
+  registerRemoteIpc();
+  registerImagesIpc();
+  registerSplitMergeIpc();
+  registerShareIpc();
+  registerNotesIpc();
+  registerAutomationIpc();
+  registerPluginsIpc();
 
   createWindow();
 

@@ -5,6 +5,13 @@ import { StorageAnalyzerDialog } from "@/components/dialogs/StorageAnalyzerDialo
 import { PermissionsDialog } from "@/components/dialogs/PermissionsDialog";
 import { PasswordDialog } from "@/components/dialogs/PasswordDialog";
 import { RecentsDialog } from "@/components/dialogs/RecentsDialog";
+import { RemoteDialog } from "@/components/dialogs/RemoteDialog";
+import { ImageToolsDialog } from "@/components/dialogs/ImageToolsDialog";
+import { SplitMergeDialog } from "@/components/dialogs/SplitMergeDialog";
+import { ShareDialog } from "@/components/dialogs/ShareDialog";
+import { NotesDialog } from "@/components/dialogs/NotesDialog";
+import { AutomationDialog } from "@/components/dialogs/AutomationDialog";
+import { PluginsDialog } from "@/components/dialogs/PluginsDialog";
 
 export function ModalRoot() {
   const modal = useUiStore((s) => s.modal);
@@ -24,6 +31,20 @@ export function ModalRoot() {
       return <PasswordDialog mode="decrypt" />;
     case "recents":
       return <RecentsDialog />;
+    case "remote":
+      return <RemoteDialog />;
+    case "imageTools":
+      return <ImageToolsDialog />;
+    case "splitMerge":
+      return <SplitMergeDialog />;
+    case "share":
+      return <ShareDialog />;
+    case "notes":
+      return <NotesDialog />;
+    case "automation":
+      return <AutomationDialog />;
+    case "plugins":
+      return <PluginsDialog />;
     default:
       return null;
   }

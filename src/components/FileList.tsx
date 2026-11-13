@@ -10,6 +10,8 @@ import { RenameInput } from "./RenameInput";
 import type { FileEntry, SortKey, TagColor } from "@/types";
 import { TAG_COLORS } from "@/types";
 
+const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp"]);
+
 const TAG_HEX: Record<TagColor, string> = {
   red: "#ef4444",
   orange: "#f97316",
@@ -121,6 +123,17 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             label: "Decrypt…",
             enabled: selectionCount === 1 && entry.extension === "enc",
           },
+          {
+            id: "imageTools",
+            label: "Image Tools…",
+            enabled: selectedList.length > 0 && selectedList.every((p) => IMAGE_EXTS.has(p.split(".").pop()?.toLowerCase() ?? "")),
+          },
+          {
+            id: "splitMerge",
+            label: "Split / Merge…",
+          },
+          { id: "share", label: "Share on Local Network…" },
+          { id: "notes", label: "Note…", enabled: selectionCount === 1 },
           { type: "separator" as const, id: "sep5", label: "" },
           { id: "delete", label: "Move to Trash" },
           { id: "shred", label: "Shred (permanently delete)" },
@@ -131,6 +144,9 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           { id: "paste", label: "Paste", enabled: clipboard.paths.length > 0 },
           { type: "separator" as const, id: "sep1", label: "" },
           { id: "openTerminal", label: "Open Terminal Here" },
+          { id: "remote", label: "Connect to FTP/SFTP/WebDAV…" },
+          { id: "automation", label: "Folder Automation Rules…" },
+          { id: "plugins", label: "Plugins…" },
         ];
 
     const action = await window.fileAPI.showContextMenu(items);
@@ -203,6 +219,27 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       }
       case "openTerminal":
         if (activeTab) window.fileAPI.openTerminal(activeTab.path);
+        break;
+      case "imageTools":
+        openModal("imageTools", selectedList);
+        break;
+      case "splitMerge":
+        openModal("splitMerge", selectedList);
+        break;
+      case "share":
+        openModal("share", selectedList);
+        break;
+      case "notes":
+        if (singlePath) openModal("notes", [singlePath]);
+        break;
+      case "remote":
+        openModal("remote");
+        break;
+      case "automation":
+        openModal("automation");
+        break;
+      case "plugins":
+        openModal("plugins");
         break;
     }
   }

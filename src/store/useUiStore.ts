@@ -10,6 +10,13 @@ export type ModalKind =
   | "encrypt"
   | "decrypt"
   | "recents"
+  | "remote"
+  | "imageTools"
+  | "splitMerge"
+  | "share"
+  | "notes"
+  | "automation"
+  | "plugins"
   | "about";
 
 interface UiState {
