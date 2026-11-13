@@ -169,6 +169,13 @@ export interface FileAPI {
   installUpdate: () => Promise<void>;
   getCurrentVersion: () => Promise<string>;
   onUpdateStatus: (callback: (status: UpdateStatus) => void) => () => void;
+
+  getPdfPageCount: (filePath: string) => Promise<number>;
+  mergePdfs: (filePaths: string[], destPath: string) => Promise<string>;
+  extractPdfPages: (filePath: string, ranges: string, destPath: string) => Promise<string>;
+  splitPdfEveryNPages: (filePath: string, pagesPerFile: number, destDir: string) => Promise<string[]>;
+  rotatePdfPages: (filePath: string, degreesAmount: number, destPath: string, ranges?: string) => Promise<string>;
+  imagesToPdf: (imagePaths: string[], destPath: string) => Promise<string>;
 }
 
 declare global {

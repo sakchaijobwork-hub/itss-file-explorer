@@ -250,6 +250,18 @@ const api = {
     ipcRenderer.on("updater:status", listener);
     return () => ipcRenderer.removeListener("updater:status", listener);
   },
+
+  getPdfPageCount: (filePath: string): Promise<number> => ipcRenderer.invoke("pdf:getPageCount", filePath),
+  mergePdfs: (filePaths: string[], destPath: string): Promise<string> =>
+    ipcRenderer.invoke("pdf:merge", filePaths, destPath),
+  extractPdfPages: (filePath: string, ranges: string, destPath: string): Promise<string> =>
+    ipcRenderer.invoke("pdf:extractPages", filePath, ranges, destPath),
+  splitPdfEveryNPages: (filePath: string, pagesPerFile: number, destDir: string): Promise<string[]> =>
+    ipcRenderer.invoke("pdf:splitEveryNPages", filePath, pagesPerFile, destDir),
+  rotatePdfPages: (filePath: string, degreesAmount: number, destPath: string, ranges?: string): Promise<string> =>
+    ipcRenderer.invoke("pdf:rotate", filePath, degreesAmount, destPath, ranges),
+  imagesToPdf: (imagePaths: string[], destPath: string): Promise<string> =>
+    ipcRenderer.invoke("pdf:imagesToPdf", imagePaths, destPath),
 };
 
 contextBridge.exposeInMainWorld("fileAPI", api);

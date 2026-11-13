@@ -11,6 +11,7 @@ export function SettingsDialog() {
   const setSort = useFileStore((s) => s.setSort);
   const showHidden = useFileStore((s) => s.showHidden);
   const toggleHidden = useFileStore((s) => s.toggleHidden);
+  const setThemeMode = useFileStore((s) => s.setThemeMode);
   const [settings, setSettings] = useState<AppSettings>(loadSettings());
 
   function update<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
@@ -22,6 +23,7 @@ export function SettingsDialog() {
     setViewMode(settings.defaultViewMode);
     setSort(settings.defaultSortKey, settings.defaultSortDirection);
     if (settings.showHiddenByDefault !== showHidden) toggleHidden();
+    setThemeMode(settings.themeMode);
     closeModal();
   }
 
@@ -87,6 +89,19 @@ export function SettingsDialog() {
           />
           Ask before moving files to Trash
         </label>
+
+        <div>
+          <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-gray-400">Theme</label>
+          <select
+            value={settings.themeMode}
+            onChange={(e) => update("themeMode", e.target.value as "light" | "dark" | "auto")}
+            className="w-full rounded-md border border-black/10 bg-transparent px-2 py-1.5 text-sm outline-none focus:border-accent dark:border-white/10"
+          >
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="auto">Auto (follow system)</option>
+          </select>
+        </div>
 
         <div className="flex justify-end gap-2 pt-1">
           <button onClick={closeModal} className="rounded-md px-3 py-1.5 text-xs hover:bg-black/5 dark:hover:bg-white/10">

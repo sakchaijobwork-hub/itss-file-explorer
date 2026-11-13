@@ -28,6 +28,7 @@
     "lucide-react": "^0.456.0",
     "mammoth": "^1.13.0",
     "marked": "^18.2.0",
+    "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -61,6 +62,9 @@
   "build": {
     "appId": "th.co.itss.fileexplorer",
     "productName": "ITSS File Explorer",
+    "directories": {
+      "output": "release"
+    },
     "files": [
       "dist/**/*",
       "dist-electron/**/*",

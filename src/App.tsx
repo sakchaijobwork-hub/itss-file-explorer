@@ -44,6 +44,9 @@ export default function App() {
   const setSort = useFileStore((s) => s.setSort);
   const toggleHidden = useFileStore((s) => s.toggleHidden);
   const toggleTheme = useFileStore((s) => s.toggleTheme);
+  const themeMode = useFileStore((s) => s.themeMode);
+  const setThemeMode = useFileStore((s) => s.setThemeMode);
+  const setResolvedTheme = useFileStore((s) => s.setResolvedTheme);
   const goBack = useFileStore((s) => s.goBack);
   const goForward = useFileStore((s) => s.goForward);
   const goUp = useFileStore((s) => s.goUp);
@@ -78,12 +81,21 @@ export default function App() {
     setViewMode(settings.defaultViewMode);
     setSort(settings.defaultSortKey, settings.defaultSortDirection);
     if (settings.showHiddenByDefault) toggleHidden();
+    setThemeMode(settings.themeMode);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initTabs, loadTags]);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  useEffect(() => {
+    if (themeMode !== "auto" || !window.matchMedia) return;
+    const mql = window.matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (e: MediaQueryListEvent) => setResolvedTheme(e.matches ? "dark" : "light");
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, [themeMode, setResolvedTheme]);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {

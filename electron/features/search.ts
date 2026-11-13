@@ -11,7 +11,9 @@ const BINARY_EXTENSIONS = new Set([
   "png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "icns",
   "mp3", "wav", "flac", "aac", "m4a", "mp4", "mov", "mkv", "avi", "webm",
   "zip", "rar", "7z", "tar", "gz", "exe", "dll", "dmg", "pkg", "app",
-  "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx",
+  "pdf", "doc", "docx", "docm", "dotx", "dotm",
+  "xls", "xlsx", "xlsm", "xltx", "xltm",
+  "ppt", "pptx", "pptm", "ppsx", "ppsm", "potx", "potm",
 ]);
 
 function isLikelyBinary(buf: Buffer): boolean {

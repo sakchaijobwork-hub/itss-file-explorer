@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Play } from "lucide-react";
 import { useFileStore, sortEntries } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
+import { useVideoThumbnail } from "@/hooks/useVideoThumbnail";
 import { getFileIconComponent, getKindLabel } from "@/utils/fileIcon";
 import { formatBytes, formatDate } from "@/utils/format";
 import { RenameInput } from "./RenameInput";
@@ -11,6 +12,7 @@ import type { FileEntry, SortKey, TagColor, ViewMode } from "@/types";
 import { TAG_COLORS } from "@/types";
 
 const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp"]);
+const VIDEO_EXTS = new Set(["mp4", "webm", "mov", "m4v"]);
 
 const TAG_HEX: Record<TagColor, string> = {
   red: "#ef4444",
@@ -193,6 +195,13 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             id: "splitMerge",
             label: "Split / Merge…",
           },
+          {
+            id: "pdfTools",
+            label: "PDF Tools…",
+            enabled:
+              selectedList.some((p) => p.toLowerCase().endsWith(".pdf")) ||
+              selectedList.every((p) => /\.(png|jpe?g)$/i.test(p)),
+          },
           { id: "share", label: "Share on Local Network…" },
           { id: "notes", label: "Note…", enabled: selectionCount === 1 },
           { type: "separator" as const, id: "sep5", label: "" },
@@ -327,6 +336,9 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         break;
       case "splitMerge":
         openModal("splitMerge", selectedList);
+        break;
+      case "pdfTools":
+        openModal("pdfTools", selectedList);
         break;
       case "share":
         openModal("share", selectedList);
@@ -507,6 +519,8 @@ function Thumbnail({
 }) {
   const [errored, setErrored] = useState(false);
   const isImage = !entry.isDirectory && IMAGE_EXTS.has(entry.extension);
+  const isVideo = !entry.isDirectory && VIDEO_EXTS.has(entry.extension);
+  const videoThumb = useVideoThumbnail(entry.path, isVideo && !errored);
 
   if (isImage && !errored) {
     return (
@@ -518,6 +532,15 @@ function Thumbnail({
         className={clsx("rounded object-cover", className)}
         style={{ width: size, height: size }}
       />
+    );
+  }
+
+  if (isVideo && videoThumb) {
+    return (
+      <div className={clsx("relative", className)} style={{ width: size, height: size }}>
+        <img src={videoThumb} alt="" draggable={false} className="h-full w-full rounded object-cover" />
+        <Play className="absolute inset-0 m-auto h-1/3 w-1/3 text-white drop-shadow" fill="white" />
+      </div>
     );
   }
 

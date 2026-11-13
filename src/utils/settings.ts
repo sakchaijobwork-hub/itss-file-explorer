@@ -6,6 +6,7 @@ export interface AppSettings {
   defaultSortDirection: SortDirection;
   showHiddenByDefault: boolean;
   confirmBeforeTrash: boolean;
+  themeMode: "light" | "dark" | "auto";
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -14,6 +15,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultSortDirection: "asc",
   showHiddenByDefault: false,
   confirmBeforeTrash: true,
+  themeMode: "dark",
 };
 
 const KEY = "itss-settings";

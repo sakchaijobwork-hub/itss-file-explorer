@@ -28,6 +28,7 @@ interface FileStoreState {
   showHidden: boolean;
   groupByKind: boolean;
   theme: "light" | "dark";
+  themeMode: "light" | "dark" | "auto";
 
   renamingPath: string | null;
 
@@ -60,6 +61,8 @@ interface FileStoreState {
   toggleHidden: () => void;
   toggleGroupByKind: () => void;
   toggleTheme: () => void;
+  setThemeMode: (mode: "light" | "dark" | "auto") => void;
+  setResolvedTheme: (theme: "light" | "dark") => void;
 
   startRename: (path: string) => void;
   endRename: () => void;
@@ -84,6 +87,7 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
   showHidden: false,
   groupByKind: false,
   theme: "dark",
+  themeMode: "dark",
 
   renamingPath: null,
 
@@ -232,7 +236,17 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
     })),
   toggleHidden: () => set((s) => ({ showHidden: !s.showHidden })),
   toggleGroupByKind: () => set((s) => ({ groupByKind: !s.groupByKind })),
-  toggleTheme: () => set((s) => ({ theme: s.theme === "dark" ? "light" : "dark" })),
+  toggleTheme: () =>
+    set((s) => {
+      const theme = s.theme === "dark" ? "light" : "dark";
+      return { theme, themeMode: theme };
+    }),
+  setThemeMode: (mode) =>
+    set({
+      themeMode: mode,
+      theme: mode === "auto" ? (window.matchMedia?.("(prefers-color-scheme: dark)").matches ? "dark" : "light") : mode,
+    }),
+  setResolvedTheme: (theme) => set({ theme }),
 
   startRename: (path) => set({ renamingPath: path }),
   endRename: () => set({ renamingPath: null }),

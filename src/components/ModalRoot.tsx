@@ -18,6 +18,7 @@ import { AboutDialog } from "@/components/dialogs/AboutDialog";
 import { ShortcutsDialog } from "@/components/dialogs/ShortcutsDialog";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
 import { TrashDialog } from "@/components/dialogs/TrashDialog";
+import { PdfToolsDialog } from "@/components/dialogs/PdfToolsDialog";
 
 export function ModalRoot() {
   const modal = useUiStore((s) => s.modal);
@@ -63,6 +64,8 @@ export function ModalRoot() {
       return <SettingsDialog />;
     case "trash":
       return <TrashDialog />;
+    case "pdfTools":
+      return <PdfToolsDialog />;
     default:
       return null;
   }

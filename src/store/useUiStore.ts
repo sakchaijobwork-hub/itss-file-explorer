@@ -22,6 +22,7 @@ export type ModalKind =
   | "shortcuts"
   | "settings"
   | "trash"
+  | "pdfTools"
   | "about";
 
 export type UndoAction =

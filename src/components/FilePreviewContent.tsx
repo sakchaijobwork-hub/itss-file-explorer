@@ -13,9 +13,11 @@ const AUDIO_EXT = new Set(["mp3", "wav", "flac", "aac", "m4a"]);
 const TEXT_EXT = new Set([
   "txt", "md", "json", "js", "ts", "tsx", "jsx", "css", "html", "py", "java", "go", "rs", "c", "cpp", "sh", "yml", "yaml", "xml", "log", "csv",
 ]);
-const DOCX_PREVIEWABLE = new Set(["docx"]);
-const XLSX_PREVIEWABLE = new Set(["xls", "xlsx", "xlsm"]);
-const PPTX_PREVIEWABLE = new Set(["pptx", "ppsx"]);
+// Modern OOXML formats only — legacy binary .doc/.xls/.ppt are caught and
+// explained by the main-process assertPreviewable() check (see office.ts).
+const DOCX_PREVIEWABLE = new Set(["docx", "docm", "dotx", "dotm"]);
+const XLSX_PREVIEWABLE = new Set(["xls", "xlsx", "xlsm", "xltx", "xltm"]);
+const PPTX_PREVIEWABLE = new Set(["pptx", "pptm", "ppsx", "ppsm", "potx", "potm"]);
 
 function friendlyErrorMessage(err: unknown): string {
   if (err instanceof Error && err.message) {

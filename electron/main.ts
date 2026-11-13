@@ -30,6 +30,7 @@ import { registerTrashIpc } from "./features/trash";
 import { registerParallelsIpc } from "./features/parallels";
 import { registerNetworkIpc } from "./features/network";
 import { registerUpdaterIpc } from "./features/updater";
+import { registerPdfToolsIpc } from "./features/pdfTools";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -233,6 +234,7 @@ app.whenReady().then(() => {
   registerParallelsIpc();
   registerNetworkIpc();
   registerUpdaterIpc();
+  registerPdfToolsIpc();
 
   buildAppMenu();
   createWindow();
