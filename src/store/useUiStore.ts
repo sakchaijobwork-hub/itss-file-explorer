@@ -19,7 +19,13 @@ export type ModalKind =
   | "plugins"
   | "compare"
   | "contentSearch"
+  | "shortcuts"
   | "about";
+
+export type UndoAction =
+  | { type: "rename"; oldPath: string; newPath: string }
+  | { type: "move"; items: { from: string; to: string }[] }
+  | { type: "copy"; createdPaths: string[] };
 
 interface UiState {
   commandPaletteOpen: boolean;
@@ -30,6 +36,7 @@ interface UiState {
   quickLookPath: string | null;
   gridIconSize: number;
   addressBarEditing: boolean;
+  lastAction: UndoAction | null;
 
   tagsMap: Record<string, TagColor[]>;
 
@@ -42,6 +49,7 @@ interface UiState {
   closeQuickLook: () => void;
   setGridIconSize: (size: number) => void;
   setAddressBarEditing: (editing: boolean) => void;
+  setLastAction: (action: UndoAction | null) => void;
 
   loadTags: () => Promise<void>;
   toggleTag: (filePath: string, tag: TagColor) => Promise<void>;
@@ -56,6 +64,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   quickLookPath: null,
   gridIconSize: 96,
   addressBarEditing: false,
+  lastAction: null,
 
   tagsMap: {},
 
@@ -68,6 +77,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   closeQuickLook: () => set({ quickLookPath: null }),
   setGridIconSize: (size) => set({ gridIconSize: size }),
   setAddressBarEditing: (editing) => set({ addressBarEditing: editing }),
+  setLastAction: (action) => set({ lastAction: action }),
 
   loadTags: async () => {
     const tagsMap = await window.fileAPI.getAllTags();

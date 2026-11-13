@@ -4,7 +4,7 @@ import { ChevronUp, ChevronDown } from "lucide-react";
 import { useFileStore, sortEntries } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
-import { getFileIconComponent } from "@/utils/fileIcon";
+import { getFileIconComponent, getKindLabel } from "@/utils/fileIcon";
 import { formatBytes, formatDate } from "@/utils/format";
 import { RenameInput } from "./RenameInput";
 import type { FileEntry, SortKey, TagColor, ViewMode } from "@/types";
@@ -37,6 +37,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const sortDirection = useFileStore((s) => s.sortDirection);
   const setSort = useFileStore((s) => s.setSort);
   const showHidden = useFileStore((s) => s.showHidden);
+  const groupByKind = useFileStore((s) => s.groupByKind);
   const selectedPaths = useFileStore((s) => s.selectedPaths);
   const select = useFileStore((s) => s.select);
   const clearSelection = useFileStore((s) => s.clearSelection);
@@ -64,6 +65,26 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     }
     return sortEntries(list, sortKey, sortDirection);
   }, [entries, showHidden, searchQuery, sortKey, sortDirection]);
+
+  const renderItems = useMemo(() => {
+    if (!groupByKind) return visibleEntries.map((entry) => ({ kind: "entry" as const, entry }));
+    const groups = new Map<string, FileEntry[]>();
+    for (const entry of visibleEntries) {
+      const label = getKindLabel(entry.extension, entry.isDirectory);
+      const list = groups.get(label) ?? [];
+      list.push(entry);
+      groups.set(label, list);
+    }
+    const order = ["Folders", "Images", "Videos", "Audio", "Documents", "Spreadsheets", "Presentations", "Archives", "Code", "Other"];
+    const items: ({ kind: "header"; label: string } | { kind: "entry"; entry: FileEntry })[] = [];
+    for (const label of order) {
+      const list = groups.get(label);
+      if (!list || list.length === 0) continue;
+      items.push({ kind: "header", label: `${label} (${list.length})` });
+      for (const entry of list) items.push({ kind: "entry", entry });
+    }
+    return items;
+  }, [visibleEntries, groupByKind]);
 
   const typeAheadRef = useRef({ buffer: "", lastTime: 0 });
 
@@ -351,35 +372,45 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         )}
         style={viewMode === "grid" ? { gridTemplateColumns: `repeat(auto-fill, minmax(${gridIconSize}px, 1fr))` } : undefined}
       >
-        {visibleEntries.map((entry) => (
+        {renderItems.map((item) =>
+          item.kind === "header" ? (
+            <div
+              key={`header-${item.label}`}
+              className="px-1 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-gray-400 first:pt-0"
+              style={viewMode === "grid" ? { gridColumn: "1 / -1" } : undefined}
+            >
+              {item.label}
+            </div>
+          ) : (
           <FileItem
-            key={entry.path}
-            entry={entry}
+            key={item.entry.path}
+            entry={item.entry}
             viewMode={viewMode}
-            isSelected={selectedPaths.has(entry.path)}
-            isCut={clipboard.mode === "cut" && clipboard.paths.includes(entry.path)}
-            isRenaming={renamingPath === entry.path}
-            tags={tagsMap[entry.path] ?? []}
+            isSelected={selectedPaths.has(item.entry.path)}
+            isCut={clipboard.mode === "cut" && clipboard.paths.includes(item.entry.path)}
+            isRenaming={renamingPath === item.entry.path}
+            tags={tagsMap[item.entry.path] ?? []}
             iconSize={gridIconSize}
-            onSelect={(e) => select(entry.path, selectMode(e))}
-            onOpen={() => handleOpen(entry)}
+            onSelect={(e) => select(item.entry.path, selectMode(e))}
+            onOpen={() => handleOpen(item.entry)}
             onDragStart={(e) => {
               e.preventDefault();
-              const paths = selectedPaths.has(entry.path) ? Array.from(selectedPaths) : [entry.path];
+              const paths = selectedPaths.has(item.entry.path) ? Array.from(selectedPaths) : [item.entry.path];
               window.fileAPI.startDrag(paths);
             }}
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              showContextMenu(entry);
+              showContextMenu(item.entry);
             }}
             onCommitRename={async (value) => {
-              if (value && value !== entry.name) await renameEntry(entry.path, value);
+              if (value && value !== item.entry.name) await renameEntry(item.entry.path, value);
               endRename();
             }}
             onCancelRename={endRename}
           />
-        ))}
+          )
+        )}
       </div>
     </div>
   );

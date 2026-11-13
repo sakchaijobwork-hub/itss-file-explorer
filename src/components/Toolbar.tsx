@@ -19,6 +19,7 @@ import {
   EyeOff,
   Search,
   FileSearch,
+  LayoutGrid,
   Columns2,
   Copy as CopyIcon,
   HardDrive,
@@ -72,6 +73,8 @@ export function Toolbar({ onSearch }: { onSearch: (q: string) => void }) {
   const setViewMode = useFileStore((s) => s.setViewMode);
   const showHidden = useFileStore((s) => s.showHidden);
   const toggleHidden = useFileStore((s) => s.toggleHidden);
+  const groupByKind = useFileStore((s) => s.groupByKind);
+  const toggleGroupByKind = useFileStore((s) => s.toggleGroupByKind);
   const theme = useFileStore((s) => s.theme);
   const toggleTheme = useFileStore((s) => s.toggleTheme);
   const selectedPaths = useFileStore((s) => s.selectedPaths);
@@ -178,6 +181,9 @@ export function Toolbar({ onSearch }: { onSearch: (q: string) => void }) {
 
       <ToolbarButton onClick={toggleHidden} active={showHidden} title="Show Hidden Files">
         {showHidden ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+      </ToolbarButton>
+      <ToolbarButton onClick={toggleGroupByKind} active={groupByKind} title="Group by Kind">
+        <LayoutGrid className="h-4 w-4" />
       </ToolbarButton>
       <ToolbarButton onClick={toggleTheme} title="Toggle Theme">
         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}

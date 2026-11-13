@@ -36,7 +36,20 @@ export default function App() {
   const setAddressBarEditing = useUiStore((s) => s.setAddressBarEditing);
   const openModal = useUiStore((s) => s.openModal);
 
-  const { copySelection, cutSelection, paste, deleteSelection, createNewFolder } = useFileOperations();
+  const { copySelection, cutSelection, paste, deleteSelection, createNewFolder, createNewFile, performUndo } =
+    useFileOperations();
+  const setViewMode = useFileStore((s) => s.setViewMode);
+  const toggleHidden = useFileStore((s) => s.toggleHidden);
+  const toggleTheme = useFileStore((s) => s.toggleTheme);
+  const goBack = useFileStore((s) => s.goBack);
+  const goForward = useFileStore((s) => s.goForward);
+  const goUp = useFileStore((s) => s.goUp);
+  const openTab = useFileStore((s) => s.openTab);
+  const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
+  const togglePreview = useUiStore((s) => s.togglePreview);
+  const toggleDualPane = useUiStore((s) => s.toggleDualPane);
+  const gridIconSize = useUiStore((s) => s.gridIconSize);
+  const setGridIconSize = useUiStore((s) => s.setGridIconSize);
 
   useDirectoryLoader();
 
@@ -62,6 +75,9 @@ export default function App() {
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "f") {
         e.preventDefault();
         openModal("contentSearch");
+      } else if (mod && e.key.toLowerCase() === "z") {
+        e.preventDefault();
+        performUndo();
       } else if (mod && e.key.toLowerCase() === "c") {
         e.preventDefault();
         copySelection();
@@ -105,6 +121,7 @@ export default function App() {
     copySelection,
     cutSelection,
     paste,
+    performUndo,
     selectAll,
     createNewFolder,
     deleteSelection,
@@ -118,6 +135,122 @@ export default function App() {
     closeQuickLook,
     setAddressBarEditing,
     openModal,
+  ]);
+
+  useEffect(() => {
+    const unsubscribe = window.fileAPI.onMenuAction((action) => {
+      switch (action) {
+        case "undo":
+          performUndo();
+          break;
+        case "new-tab":
+          if (activeTab) openTab(activeTab.path);
+          break;
+        case "new-folder":
+          createNewFolder();
+          break;
+        case "new-file":
+          createNewFile();
+          break;
+        case "open-terminal":
+          if (activeTab) window.fileAPI.openTerminal(activeTab.path);
+          break;
+        case "connect-remote":
+          openModal("remote");
+          break;
+        case "compare-folders":
+          openModal("compare");
+          break;
+        case "content-search":
+          openModal("contentSearch");
+          break;
+        case "view-grid":
+          setViewMode("grid");
+          break;
+        case "view-list":
+          setViewMode("list");
+          break;
+        case "view-details":
+          setViewMode("details");
+          break;
+        case "view-columns":
+          setViewMode("columns");
+          break;
+        case "zoom-in":
+          setGridIconSize(Math.min(160, gridIconSize + 8));
+          break;
+        case "zoom-out":
+          setGridIconSize(Math.max(72, gridIconSize - 8));
+          break;
+        case "toggle-hidden":
+          toggleHidden();
+          break;
+        case "toggle-preview":
+          togglePreview();
+          break;
+        case "toggle-dualpane":
+          toggleDualPane();
+          break;
+        case "toggle-theme":
+          toggleTheme();
+          break;
+        case "go-back":
+          goBack();
+          break;
+        case "go-forward":
+          goForward();
+          break;
+        case "go-up":
+          goUp();
+          break;
+        case "go-to-folder":
+          setAddressBarEditing(true);
+          break;
+        case "find-duplicates":
+          openModal("duplicates");
+          break;
+        case "analyze-storage":
+          openModal("storage");
+          break;
+        case "batch-rename":
+          openModal("batchRename");
+          break;
+        case "recent-files":
+          openModal("recents");
+          break;
+        case "automation":
+          openModal("automation");
+          break;
+        case "plugins":
+          openModal("plugins");
+          break;
+        case "shortcuts-help":
+          openModal("shortcuts");
+          break;
+        case "about":
+          openModal("about");
+          break;
+      }
+    });
+    return unsubscribe;
+  }, [
+    activeTab,
+    openTab,
+    createNewFolder,
+    createNewFile,
+    performUndo,
+    openModal,
+    setViewMode,
+    setGridIconSize,
+    gridIconSize,
+    toggleHidden,
+    togglePreview,
+    toggleDualPane,
+    toggleTheme,
+    goBack,
+    goForward,
+    goUp,
+    setAddressBarEditing,
   ]);
 
   return (

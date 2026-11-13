@@ -27,11 +27,15 @@ import { registerSearchIpc } from "./features/search";
 
 const isDev = process.env.NODE_ENV === "development";
 
-let mainWindow: BrowserWindow | null = null;
+const windows = new Set<BrowserWindow>();
 const watchers = new Map<string, FSWatcher>();
 
+function getTargetWindow(): BrowserWindow | undefined {
+  return BrowserWindow.getFocusedWindow() ?? Array.from(windows)[0];
+}
+
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 1280,
     height: 800,
     minWidth: 800,
@@ -50,16 +54,130 @@ function createWindow() {
     },
   });
 
+  windows.add(win);
+
   if (isDev) {
-    mainWindow.loadURL("http://localhost:5173");
-    mainWindow.webContents.openDevTools({ mode: "detach" });
+    win.loadURL("http://localhost:5173");
+    win.webContents.openDevTools({ mode: "detach" });
   } else {
-    mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
+    win.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 
-  mainWindow.on("closed", () => {
-    mainWindow = null;
+  win.on("closed", () => {
+    windows.delete(win);
   });
+
+  return win;
+}
+
+function sendMenuAction(action: string) {
+  const win = getTargetWindow();
+  win?.webContents.send("menu:action", action);
+}
+
+function buildAppMenu() {
+  const isMac = process.platform === "darwin";
+
+  const template: MenuItemConstructorOptions[] = [
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: "about" as const },
+              { type: "separator" as const },
+              { role: "services" as const },
+              { type: "separator" as const },
+              { role: "hide" as const },
+              { role: "hideOthers" as const },
+              { role: "unhide" as const },
+              { type: "separator" as const },
+              { role: "quit" as const },
+            ],
+          },
+        ]
+      : []),
+    {
+      label: "File",
+      submenu: [
+        { label: "New Window", accelerator: "CmdOrCtrl+N", click: () => createWindow() },
+        { label: "New Tab", accelerator: "CmdOrCtrl+T", click: () => sendMenuAction("new-tab") },
+        { label: "New Folder", accelerator: "CmdOrCtrl+Shift+N", click: () => sendMenuAction("new-folder") },
+        { label: "New File", click: () => sendMenuAction("new-file") },
+        { type: "separator" },
+        { label: "Open Terminal Here", click: () => sendMenuAction("open-terminal") },
+        { label: "Connect to Remote…", click: () => sendMenuAction("connect-remote") },
+        { label: "Compare / Sync Folders…", click: () => sendMenuAction("compare-folders") },
+        { type: "separator" },
+        isMac ? { role: "close" as const } : { label: "Close Window", accelerator: "CmdOrCtrl+W", role: "close" as const },
+      ],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        // "Undo" is intentionally app-level (last file operation), not text-edit undo —
+        // matches Finder/Explorer convention, so no role: "undo"/"redo" here.
+        { label: "Undo", accelerator: "CmdOrCtrl+Z", click: () => sendMenuAction("undo") },
+        { type: "separator" },
+        { role: "cut" }, { role: "copy" }, { role: "paste" }, { role: "selectAll" },
+        { type: "separator" },
+        { label: "Search File Contents…", accelerator: "CmdOrCtrl+Shift+F", click: () => sendMenuAction("content-search") },
+      ],
+    },
+    {
+      label: "View",
+      submenu: [
+        { label: "as Grid", click: () => sendMenuAction("view-grid") },
+        { label: "as List", click: () => sendMenuAction("view-list") },
+        { label: "as Details", click: () => sendMenuAction("view-details") },
+        { label: "as Columns", click: () => sendMenuAction("view-columns") },
+        { type: "separator" },
+        { label: "Zoom In", accelerator: "CmdOrCtrl+=", click: () => sendMenuAction("zoom-in") },
+        { label: "Zoom Out", accelerator: "CmdOrCtrl+-", click: () => sendMenuAction("zoom-out") },
+        { type: "separator" },
+        { label: "Show Hidden Files", accelerator: "CmdOrCtrl+Shift+.", click: () => sendMenuAction("toggle-hidden") },
+        { label: "Toggle Preview Panel", click: () => sendMenuAction("toggle-preview") },
+        { label: "Toggle Dual Pane", click: () => sendMenuAction("toggle-dualpane") },
+        { label: "Toggle Theme", click: () => sendMenuAction("toggle-theme") },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+      ],
+    },
+    {
+      label: "Go",
+      submenu: [
+        { label: "Back", accelerator: "CmdOrCtrl+[", click: () => sendMenuAction("go-back") },
+        { label: "Forward", accelerator: "CmdOrCtrl+]", click: () => sendMenuAction("go-forward") },
+        { label: "Up", accelerator: "CmdOrCtrl+Up", click: () => sendMenuAction("go-up") },
+        { label: "Go to Folder…", accelerator: "CmdOrCtrl+L", click: () => sendMenuAction("go-to-folder") },
+      ],
+    },
+    {
+      label: "Tools",
+      submenu: [
+        { label: "Find Duplicate Files…", click: () => sendMenuAction("find-duplicates") },
+        { label: "Analyze Storage…", click: () => sendMenuAction("analyze-storage") },
+        { label: "Batch Rename…", click: () => sendMenuAction("batch-rename") },
+        { label: "Recent Files…", click: () => sendMenuAction("recent-files") },
+        { type: "separator" },
+        { label: "Folder Automation Rules…", click: () => sendMenuAction("automation") },
+        { label: "Plugins…", click: () => sendMenuAction("plugins") },
+      ],
+    },
+    {
+      label: "Window",
+      submenu: [{ role: "minimize" }, { role: "zoom" }, ...(isMac ? [{ role: "front" as const }] : [{ role: "close" as const }])],
+    },
+    {
+      label: "Help",
+      submenu: [
+        { label: "Keyboard Shortcuts", click: () => sendMenuAction("shortcuts-help") },
+        { label: "About ITSS File Explorer", click: () => sendMenuAction("about") },
+      ],
+    },
+  ];
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
 app.whenReady().then(() => {
@@ -83,6 +201,7 @@ app.whenReady().then(() => {
   registerFavoritesIpc();
   registerSearchIpc();
 
+  buildAppMenu();
   createWindow();
 
   app.on("activate", () => {

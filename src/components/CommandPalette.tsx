@@ -20,6 +20,7 @@ import {
   GitCompare,
   AppWindow,
   FileSearch,
+  Undo2,
 } from "lucide-react";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileStore } from "@/store/useFileStore";
@@ -45,7 +46,7 @@ export function CommandPalette() {
   const togglePreview = useUiStore((s) => s.togglePreview);
   const toggleDualPane = useUiStore((s) => s.toggleDualPane);
   const openModal = useUiStore((s) => s.openModal);
-  const { createNewFolder } = useFileOperations();
+  const { createNewFolder, performUndo, canUndo } = useFileOperations();
 
   const commands = useMemo<Command[]>(
     () => [
@@ -53,6 +54,7 @@ export function CommandPalette() {
       { id: "view-list", label: "View: List", icon: List, run: () => setViewMode("list") },
       { id: "view-details", label: "View: Details", icon: Rows3, run: () => setViewMode("details") },
       { id: "new-folder", label: "New Folder", icon: FolderPlus, run: () => createNewFolder() },
+      ...(canUndo ? [{ id: "undo", label: "Undo Last Action", icon: Undo2, run: () => performUndo() }] : []),
       { id: "theme", label: "Toggle Light / Dark Theme", icon: Sun, run: () => toggleTheme() },
       { id: "dual-pane", label: "Toggle Dual Pane", icon: Columns2, run: () => toggleDualPane() },
       { id: "preview", label: "Toggle Preview Panel", icon: Eye, run: () => togglePreview() },
@@ -72,7 +74,7 @@ export function CommandPalette() {
       { id: "newWindow", label: "New Window", icon: AppWindow, run: () => window.fileAPI.newWindow() },
       { id: "contentSearch", label: "Search File Contents…", icon: FileSearch, run: () => openModal("contentSearch") },
     ],
-    [setViewMode, createNewFolder, toggleTheme, toggleDualPane, togglePreview, openModal, activeTab]
+    [setViewMode, createNewFolder, performUndo, canUndo, toggleTheme, toggleDualPane, togglePreview, openModal, activeTab]
   );
 
   const filtered = useMemo(

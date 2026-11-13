@@ -214,6 +214,12 @@ const api = {
     ipcRenderer.on("fs:searchProgress", listener);
     return () => ipcRenderer.removeListener("fs:searchProgress", listener);
   },
+
+  onMenuAction: (callback: (action: string) => void) => {
+    const listener = (_e: unknown, action: string) => callback(action);
+    ipcRenderer.on("menu:action", listener);
+    return () => ipcRenderer.removeListener("menu:action", listener);
+  },
 };
 
 contextBridge.exposeInMainWorld("fileAPI", api);

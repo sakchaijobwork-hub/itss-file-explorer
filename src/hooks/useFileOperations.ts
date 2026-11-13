@@ -1,7 +1,13 @@
 import { useCallback } from "react";
 import { useFileStore } from "@/store/useFileStore";
+import { useUiStore } from "@/store/useUiStore";
+import { basename, joinPath } from "@/utils/format";
 
 let opCounter = 0;
+
+function dirnameOf(p: string): string {
+  return p.replace(/[/\\][^/\\]+[/\\]?$/, "") || "/";
+}
 
 export function useFileOperations() {
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
@@ -13,6 +19,8 @@ export function useFileOperations() {
   const startRename = useFileStore((s) => s.startRename);
   const clearSelection = useFileStore((s) => s.clearSelection);
   const select = useFileStore((s) => s.select);
+  const lastAction = useUiStore((s) => s.lastAction);
+  const setLastAction = useUiStore((s) => s.setLastAction);
 
   const currentPath = activeTab?.path ?? "";
 
@@ -29,11 +37,17 @@ export function useFileOperations() {
     const opId = `op-${++opCounter}`;
     if (clipboard.mode === "copy") {
       await window.fileAPI.copy(clipboard.paths, currentPath, opId);
+      setLastAction({
+        type: "copy",
+        createdPaths: clipboard.paths.map((p) => joinPath(currentPath, basename(p))),
+      });
     } else if (clipboard.mode === "cut") {
+      const items = clipboard.paths.map((p) => ({ from: p, to: joinPath(currentPath, basename(p)) }));
       await window.fileAPI.move(clipboard.paths, currentPath, opId);
+      setLastAction({ type: "move", items });
       clearClipboard();
     }
-  }, [clipboard, currentPath, clearClipboard]);
+  }, [clipboard, currentPath, clearClipboard, setLastAction]);
 
   const deleteSelection = useCallback(async (permanent = false) => {
     const paths = Array.from(selectedPaths);
@@ -73,10 +87,14 @@ export function useFileOperations() {
     select(target, "single");
   }, [currentPath, entries, startRename, select]);
 
-  const renameEntry = useCallback(async (oldPath: string, newName: string) => {
-    if (!newName.trim()) return;
-    await window.fileAPI.rename(oldPath, newName.trim());
-  }, []);
+  const renameEntry = useCallback(
+    async (oldPath: string, newName: string) => {
+      if (!newName.trim()) return;
+      await window.fileAPI.rename(oldPath, newName.trim());
+      setLastAction({ type: "rename", oldPath, newPath: joinPath(dirnameOf(oldPath), newName.trim()) });
+    },
+    [setLastAction]
+  );
 
   const openEntry = useCallback(
     (path: string) => {
@@ -85,6 +103,21 @@ export function useFileOperations() {
     },
     []
   );
+
+  const performUndo = useCallback(async () => {
+    if (!lastAction) return;
+    const opId = `undo-${++opCounter}`;
+    if (lastAction.type === "rename") {
+      await window.fileAPI.rename(lastAction.newPath, basename(lastAction.oldPath));
+    } else if (lastAction.type === "move") {
+      for (const item of lastAction.items) {
+        await window.fileAPI.move([item.to], dirnameOf(item.from), opId);
+      }
+    } else if (lastAction.type === "copy") {
+      await window.fileAPI.deleteToTrash(lastAction.createdPaths);
+    }
+    setLastAction(null);
+  }, [lastAction, setLastAction]);
 
   return {
     copySelection,
@@ -95,5 +128,7 @@ export function useFileOperations() {
     createNewFile,
     renameEntry,
     openEntry,
+    performUndo,
+    canUndo: lastAction !== null,
   };
 }

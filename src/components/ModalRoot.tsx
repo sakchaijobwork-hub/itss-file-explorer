@@ -14,6 +14,8 @@ import { AutomationDialog } from "@/components/dialogs/AutomationDialog";
 import { PluginsDialog } from "@/components/dialogs/PluginsDialog";
 import { CompareDialog } from "@/components/dialogs/CompareDialog";
 import { ContentSearchDialog } from "@/components/dialogs/ContentSearchDialog";
+import { AboutDialog } from "@/components/dialogs/AboutDialog";
+import { ShortcutsDialog } from "@/components/dialogs/ShortcutsDialog";
 
 export function ModalRoot() {
   const modal = useUiStore((s) => s.modal);
@@ -51,6 +53,10 @@ export function ModalRoot() {
       return <CompareDialog />;
     case "contentSearch":
       return <ContentSearchDialog />;
+    case "about":
+      return <AboutDialog />;
+    case "shortcuts":
+      return <ShortcutsDialog />;
     default:
       return null;
   }

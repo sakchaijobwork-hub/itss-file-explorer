@@ -26,6 +26,7 @@ interface FileStoreState {
   sortKey: SortKey;
   sortDirection: SortDirection;
   showHidden: boolean;
+  groupByKind: boolean;
   theme: "light" | "dark";
 
   renamingPath: string | null;
@@ -57,6 +58,7 @@ interface FileStoreState {
   setViewMode: (mode: ViewMode) => void;
   setSort: (key: SortKey, direction?: SortDirection) => void;
   toggleHidden: () => void;
+  toggleGroupByKind: () => void;
   toggleTheme: () => void;
 
   startRename: (path: string) => void;
@@ -80,6 +82,7 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
   sortKey: "name",
   sortDirection: "asc",
   showHidden: false,
+  groupByKind: false,
   theme: "dark",
 
   renamingPath: null,
@@ -212,6 +215,7 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
       sortDirection: direction ?? (s.sortKey === key && s.sortDirection === "asc" ? "desc" : "asc"),
     })),
   toggleHidden: () => set((s) => ({ showHidden: !s.showHidden })),
+  toggleGroupByKind: () => set((s) => ({ groupByKind: !s.groupByKind })),
   toggleTheme: () => set((s) => ({ theme: s.theme === "dark" ? "light" : "dark" })),
 
   startRename: (path) => set({ renamingPath: path }),

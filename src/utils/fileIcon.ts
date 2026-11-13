@@ -44,3 +44,22 @@ export const OFFICE_EXTENSIONS = new Set(["doc", "docx", "xls", "xlsx", "xlsm", 
 export const DOCX_EXTENSIONS = new Set(["doc", "docx"]);
 export const XLSX_EXTENSIONS = new Set(["xls", "xlsx", "xlsm"]);
 export const PPTX_EXTENSIONS = new Set(["ppt", "pptx", "ppsx"]);
+
+const KIND_CATEGORIES: { label: string; exts: Set<string> }[] = [
+  { label: "Images", exts: new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "heic"]) },
+  { label: "Videos", exts: new Set(["mp4", "mov", "mkv", "avi", "webm"]) },
+  { label: "Audio", exts: new Set(["mp3", "wav", "flac", "aac", "m4a"]) },
+  { label: "Documents", exts: new Set(["doc", "docx", "pdf", "txt", "md", "rtf", "pages"]) },
+  { label: "Spreadsheets", exts: new Set(["xls", "xlsx", "xlsm", "csv"]) },
+  { label: "Presentations", exts: new Set(["ppt", "pptx", "ppsx", "key"]) },
+  { label: "Archives", exts: new Set(["zip", "rar", "7z", "tar", "gz", "tgz"]) },
+  { label: "Code", exts: new Set(["js", "ts", "tsx", "jsx", "json", "py", "java", "go", "rs", "html", "css", "c", "cpp", "sh"]) },
+];
+
+export function getKindLabel(extension: string, isDirectory: boolean): string {
+  if (isDirectory) return "Folders";
+  for (const cat of KIND_CATEGORIES) {
+    if (cat.exts.has(extension)) return cat.label;
+  }
+  return "Other";
+}
