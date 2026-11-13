@@ -193,6 +193,14 @@ export interface ContentSearchResult {
   lineNumber: number;
 }
 
+export interface ParallelsVm {
+  uuid: string;
+  name: string;
+  status: string;
+  mountedPath: string | null;
+  accessible: boolean;
+}
+
 export interface TrashItem {
   id: string;
   name: string;

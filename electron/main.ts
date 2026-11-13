@@ -27,6 +27,8 @@ import { registerSearchIpc } from "./features/search";
 import { loadWindowState, trackWindowState } from "./features/windowState";
 import { registerTemplatesIpc } from "./features/templates";
 import { registerTrashIpc } from "./features/trash";
+import { registerParallelsIpc } from "./features/parallels";
+import { registerNetworkIpc } from "./features/network";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -226,6 +228,8 @@ app.whenReady().then(() => {
   registerSearchIpc();
   registerTemplatesIpc();
   registerTrashIpc();
+  registerParallelsIpc();
+  registerNetworkIpc();
 
   buildAppMenu();
   createWindow();

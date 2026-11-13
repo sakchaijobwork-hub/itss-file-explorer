@@ -24,6 +24,7 @@ import type {
   DiskSpace,
   ContentSearchResult,
   TrashItem,
+  ParallelsVm,
 } from "./types";
 
 export interface ContextMenuItem {
@@ -155,6 +156,12 @@ export interface FileAPI {
   listTrash: () => Promise<TrashItem[]>;
   restoreTrashItem: (id: string, destPath: string) => Promise<void>;
   deleteTrashItemForever: (id: string) => Promise<void>;
+
+  isParallelsAvailable: () => Promise<boolean>;
+  listParallelsVms: () => Promise<ParallelsVm[]>;
+  reconnectParallelsVm: (vmName: string) => Promise<void>;
+
+  openSmbShare: (host: string, share?: string, user?: string) => Promise<void>;
 }
 
 declare global {

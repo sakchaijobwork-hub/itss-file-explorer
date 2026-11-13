@@ -19,6 +19,7 @@ import type {
   PptxPreview,
   ContentSearchResult,
   TrashItem,
+  ParallelsVm,
 } from "./shared/types";
 import type { TagColor } from "./features/tags";
 import type { FavoriteEntry } from "./features/favorites";
@@ -231,6 +232,13 @@ const api = {
   restoreTrashItem: (id: string, destPath: string): Promise<void> =>
     ipcRenderer.invoke("trash:restore", id, destPath),
   deleteTrashItemForever: (id: string): Promise<void> => ipcRenderer.invoke("trash:deleteForever", id),
+
+  isParallelsAvailable: (): Promise<boolean> => ipcRenderer.invoke("parallels:isAvailable"),
+  listParallelsVms: (): Promise<ParallelsVm[]> => ipcRenderer.invoke("parallels:listVms"),
+  reconnectParallelsVm: (vmName: string): Promise<void> => ipcRenderer.invoke("parallels:reconnect", vmName),
+
+  openSmbShare: (host: string, share?: string, user?: string): Promise<void> =>
+    ipcRenderer.invoke("network:openSmbShare", host, share, user),
 };
 
 contextBridge.exposeInMainWorld("fileAPI", api);

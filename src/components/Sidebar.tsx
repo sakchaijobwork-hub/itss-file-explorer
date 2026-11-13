@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Clock, HardDrive, Home, Star, Plus, X, Trash2 } from "lucide-react";
+import { Clock, HardDrive, Home, Star, Plus, X, Trash2, MonitorSmartphone, RefreshCw } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
-import type { FavoriteEntry, QuickAccessItem } from "@/types";
+import type { FavoriteEntry, ParallelsVm, QuickAccessItem } from "@/types";
 import { formatBytes } from "@/utils/format";
 import clsx from "clsx";
 
@@ -129,8 +129,95 @@ export function Sidebar() {
         </div>
       </div>
 
+      <ParallelsVmsSection />
+
       <DiskSpaceIndicator path={activeTab?.path} />
     </aside>
+  );
+}
+
+function ParallelsVmsSection() {
+  const [vms, setVms] = useState<ParallelsVm[]>([]);
+  const [available, setAvailable] = useState(false);
+  const [reconnecting, setReconnecting] = useState<string | null>(null);
+  const navigateTo = useFileStore((s) => s.navigateTo);
+  const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
+
+  function refresh() {
+    window.fileAPI.listParallelsVms().then(setVms);
+  }
+
+  useEffect(() => {
+    if (window.fileAPI.platform !== "darwin") return;
+    window.fileAPI.isParallelsAvailable().then((ok) => {
+      setAvailable(ok);
+      if (ok) refresh();
+    });
+  }, []);
+
+  if (!available || vms.length === 0) return null;
+
+  async function reconnect(name: string) {
+    setReconnecting(name);
+    try {
+      await window.fileAPI.reconnectParallelsVm(name);
+    } finally {
+      setTimeout(() => {
+        refresh();
+        setReconnecting(null);
+      }, 1500);
+    }
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between px-2 pb-1">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Parallels VMs</span>
+        <button onClick={refresh} title="Refresh" className="rounded p-0.5 text-gray-400 hover:bg-black/5 dark:hover:bg-white/10">
+          <RefreshCw className="h-3 w-3" />
+        </button>
+      </div>
+      <div className="flex flex-col gap-0.5">
+        {vms.map((vm) => {
+          const isActive = !!vm.mountedPath && activeTab?.path === vm.mountedPath;
+          return (
+            <div
+              key={vm.uuid}
+              className={clsx(
+                "flex items-center gap-2 rounded-md px-2 py-1.5 text-[13px]",
+                isActive ? "bg-accent/15 text-accent" : "text-gray-700 hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/5"
+              )}
+            >
+              <button
+                onClick={() => vm.accessible && vm.mountedPath && navigateTo(vm.mountedPath)}
+                disabled={!vm.accessible}
+                title={vm.accessible ? vm.mountedPath! : `${vm.name} drive isn't mounted on macOS yet`}
+                className="flex min-w-0 flex-1 items-center gap-2 text-left disabled:cursor-default"
+              >
+                <MonitorSmartphone className="h-4 w-4 shrink-0" />
+                <span className="truncate">{vm.name}</span>
+                <span
+                  className={clsx(
+                    "h-1.5 w-1.5 shrink-0 rounded-full",
+                    vm.accessible ? "bg-green-500" : vm.status === "running" ? "bg-yellow-500" : "bg-gray-400"
+                  )}
+                />
+              </button>
+              {!vm.accessible && vm.status === "running" && (
+                <button
+                  onClick={() => reconnect(vm.name)}
+                  disabled={reconnecting === vm.name}
+                  title="Connect via Finder (smb://)"
+                  className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-accent hover:bg-accent/10 disabled:opacity-40"
+                >
+                  {reconnecting === vm.name ? "…" : "Connect"}
+                </button>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
