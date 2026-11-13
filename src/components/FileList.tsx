@@ -17,6 +17,10 @@ const OFFICE_PREVIEW_EXTS = new Set([
   "xls", "xlsx", "xlsm", "xltx", "xltm",
   "pptx", "pptm", "ppsx", "ppsm", "potx", "potm",
 ]);
+const TEXT_PRINT_EXTS = new Set([
+  "txt", "md", "json", "js", "ts", "tsx", "jsx", "css", "html", "py", "java", "go", "rs", "c", "cpp", "sh", "yml", "yaml", "xml", "log", "csv",
+]);
+const PRINTABLE_EXTS = new Set(["pdf", ...IMAGE_EXTS, ...TEXT_PRINT_EXTS, ...OFFICE_PREVIEW_EXTS]);
 const VIDEO_EXTS = new Set(["mp4", "webm", "mov", "m4v"]);
 
 const TAG_HEX: Record<TagColor, string> = {
@@ -142,6 +146,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           { id: "open", label: "Open" },
           { id: "openWith", label: "Open With…", enabled: !entry.isDirectory },
           { id: "showInFolder", label: "Show in Finder/Explorer" },
+          { id: "print", label: "Print…", enabled: selectionCount === 1 && PRINTABLE_EXTS.has(entry.extension) },
           { id: "copyPath", label: "Copy Path" },
           { id: "copyName", label: "Copy Name" },
           { id: "properties", label: "Properties…", enabled: selectionCount === 1 },
@@ -272,6 +277,13 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         break;
       case "openWith":
         if (entry) window.fileAPI.openWith(entry.path);
+        break;
+      case "print":
+        if (entry) {
+          window.fileAPI.printFile(entry.path).then((ok) => {
+            if (!ok) alert("This file type can't be printed directly. Try Open in Default App instead.");
+          });
+        }
         break;
       case "copyPath":
         navigator.clipboard.writeText(selectedList.join("\n"));

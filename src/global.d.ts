@@ -111,6 +111,7 @@ export interface FileAPI {
   resizeImage: (srcPath: string, destDir: string, width: number, height?: number) => Promise<string>;
   rotateImage: (srcPath: string, destDir: string, degrees: number) => Promise<string>;
   convertImage: (srcPath: string, destDir: string, format: "png" | "jpeg" | "webp" | "bmp") => Promise<string>;
+  stripImageMetadata: (srcPath: string, destDir: string) => Promise<string>;
   batchImageOp: (
     paths: string[],
     destDir: string,
@@ -141,6 +142,7 @@ export interface FileAPI {
   previewXlsx: (filePath: string) => Promise<XlsxPreview>;
   previewPptx: (filePath: string) => Promise<PptxPreview>;
   exportPreviewToPdf: (filePath: string, destPath: string) => Promise<string>;
+  printFile: (filePath: string) => Promise<boolean>;
 
   listFavorites: () => Promise<FavoriteEntry[]>;
   addFavorite: (folderPath: string) => Promise<FavoriteEntry[]>;

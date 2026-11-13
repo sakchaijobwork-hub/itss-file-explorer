@@ -165,6 +165,8 @@ const api = {
     ipcRenderer.invoke("image:rotate", srcPath, destDir, degrees),
   convertImage: (srcPath: string, destDir: string, format: "png" | "jpeg" | "webp" | "bmp"): Promise<string> =>
     ipcRenderer.invoke("image:convert", srcPath, destDir, format),
+  stripImageMetadata: (srcPath: string, destDir: string): Promise<string> =>
+    ipcRenderer.invoke("image:stripMetadata", srcPath, destDir),
   batchImageOp: (
     paths: string[],
     destDir: string,
@@ -207,6 +209,7 @@ const api = {
   previewPptx: (filePath: string): Promise<PptxPreview> => ipcRenderer.invoke("office:previewPptx", filePath),
   exportPreviewToPdf: (filePath: string, destPath: string): Promise<string> =>
     ipcRenderer.invoke("office:exportPreviewToPdf", filePath, destPath),
+  printFile: (filePath: string): Promise<boolean> => ipcRenderer.invoke("fs:printFile", filePath),
 
   listFavorites: (): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:list"),
   addFavorite: (folderPath: string): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:add", folderPath),

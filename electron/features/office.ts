@@ -191,7 +191,11 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-async function buildExportHtml(filePath: string, ext: string): Promise<string> {
+export function isOfficePreviewable(ext: string): boolean {
+  return DOCX_EXTS.has(ext) || XLSX_EXTS.has(ext) || PPTX_EXTS.has(ext);
+}
+
+export async function buildExportHtml(filePath: string, ext: string): Promise<string> {
   const name = path.basename(filePath);
   if (DOCX_EXTS.has(ext)) {
     const doc = await previewDocx(filePath);

@@ -5,7 +5,7 @@ import { useFileStore } from "@/store/useFileStore";
 import type { ExifData } from "@/types";
 import { basename } from "@/utils/format";
 
-type Kind = "resize" | "rotate" | "convert";
+type Kind = "resize" | "rotate" | "convert" | "removeMetadata";
 
 export function ImageToolsDialog() {
   const closeModal = useUiStore((s) => s.closeModal);
@@ -32,6 +32,12 @@ export function ImageToolsDialog() {
     if (!activeTab) return;
     setBusy(true);
     try {
+      if (kind === "removeMetadata") {
+        const out: string[] = [];
+        for (const p of targetPaths) out.push(await window.fileAPI.stripImageMetadata(p, activeTab.path));
+        setResults(out);
+        return;
+      }
       const op =
         kind === "resize"
           ? { kind: "resize" as const, width }
@@ -62,7 +68,7 @@ export function ImageToolsDialog() {
         )}
 
         <div className="flex gap-2">
-          {(["resize", "rotate", "convert"] as Kind[]).map((k) => (
+          {(["resize", "rotate", "convert", "removeMetadata"] as Kind[]).map((k) => (
             <button
               key={k}
               onClick={() => setKind(k)}
@@ -70,10 +76,16 @@ export function ImageToolsDialog() {
                 kind === k ? "bg-accent text-white" : "bg-black/5 dark:bg-white/10"
               }`}
             >
-              {k}
+              {k === "removeMetadata" ? "Remove Metadata" : k}
             </button>
           ))}
         </div>
+
+        {kind === "removeMetadata" && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Creates a clean copy with EXIF, GPS location, camera, and other metadata stripped — useful before sharing photos publicly.
+          </p>
+        )}
 
         {kind === "resize" && (
           <label className="flex items-center gap-2 text-xs">

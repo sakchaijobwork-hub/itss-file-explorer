@@ -22,6 +22,7 @@ import { registerAutomationIpc } from "./features/automation";
 import { registerPluginsIpc } from "./features/plugins";
 import { registerCompareIpc } from "./features/compare";
 import { registerOfficeIpc } from "./features/office";
+import { registerPrintingIpc } from "./features/printing";
 import { registerFavoritesIpc } from "./features/favorites";
 import { registerSearchIpc } from "./features/search";
 import { loadWindowState, trackWindowState } from "./features/windowState";
@@ -227,6 +228,7 @@ app.whenReady().then(() => {
   registerPluginsIpc();
   registerCompareIpc();
   registerOfficeIpc();
+  registerPrintingIpc();
   registerFavoritesIpc();
   registerSearchIpc();
   registerTemplatesIpc();

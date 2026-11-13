@@ -57,7 +57,22 @@ async function convertImage(srcPath: string, destDir: string, format: "png" | "j
   return dest;
 }
 
+const JIMP_WRITABLE = new Set(["png", "jpg", "jpeg", "bmp"]);
+
+export async function stripMetadata(srcPath: string, destDir: string) {
+  // Jimp fully decodes and re-encodes pixel data, so EXIF/GPS/author
+  // metadata from the original file is never carried over to the output —
+  // a simple, reliable way to scrub privacy-sensitive metadata before sharing.
+  const image = await Jimp.read(srcPath);
+  const srcExt = path.extname(srcPath).slice(1).toLowerCase();
+  const ext = JIMP_WRITABLE.has(srcExt) ? (srcExt === "jpeg" ? "jpg" : srcExt) : "png";
+  const dest = destFor(srcPath, destDir, "_clean", ext);
+  await image.write(dest as `${string}.${string}`);
+  return dest;
+}
+
 export function registerImagesIpc() {
+  ipcMain.handle("image:stripMetadata", (_e, srcPath: string, destDir: string) => stripMetadata(srcPath, destDir));
   ipcMain.handle("image:getExif", (_e, filePath: string) => getExif(filePath));
   ipcMain.handle("image:resize", (_e, srcPath: string, destDir: string, width: number, height?: number) =>
     resizeImage(srcPath, destDir, width, height)
