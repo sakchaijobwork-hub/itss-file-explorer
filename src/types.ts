@@ -192,3 +192,12 @@ export interface ContentSearchResult {
   snippet: string;
   lineNumber: number;
 }
+
+export interface TrashItem {
+  id: string;
+  name: string;
+  size: number;
+  deletedAt: number | null;
+  originalPath: string | null;
+  isDirectory: boolean;
+}

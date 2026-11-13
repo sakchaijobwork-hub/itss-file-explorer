@@ -23,6 +23,7 @@ import type {
   FavoriteEntry,
   DiskSpace,
   ContentSearchResult,
+  TrashItem,
 } from "./types";
 
 export interface ContextMenuItem {
@@ -146,6 +147,14 @@ export interface FileAPI {
   onSearchProgress: (callback: (p: { id: string; scanned: number; found: number }) => void) => () => void;
 
   onMenuAction: (callback: (action: string) => void) => () => void;
+
+  listTemplates: () => Promise<{ name: string; path: string }[]>;
+  createFromTemplate: (templatePath: string, destDir: string) => Promise<string>;
+  openTemplatesFolder: () => Promise<string>;
+
+  listTrash: () => Promise<TrashItem[]>;
+  restoreTrashItem: (id: string, destPath: string) => Promise<void>;
+  deleteTrashItemForever: (id: string) => Promise<void>;
 }
 
 declare global {

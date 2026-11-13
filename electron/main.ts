@@ -25,6 +25,8 @@ import { registerOfficeIpc } from "./features/office";
 import { registerFavoritesIpc } from "./features/favorites";
 import { registerSearchIpc } from "./features/search";
 import { loadWindowState, trackWindowState } from "./features/windowState";
+import { registerTemplatesIpc } from "./features/templates";
+import { registerTrashIpc } from "./features/trash";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -222,6 +224,8 @@ app.whenReady().then(() => {
   registerOfficeIpc();
   registerFavoritesIpc();
   registerSearchIpc();
+  registerTemplatesIpc();
+  registerTrashIpc();
 
   buildAppMenu();
   createWindow();

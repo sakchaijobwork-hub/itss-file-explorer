@@ -25,6 +25,7 @@ import {
   Settings,
   Keyboard,
   Info,
+  Trash2,
 } from "lucide-react";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileStore } from "@/store/useFileStore";
@@ -66,6 +67,7 @@ export function CommandPalette() {
       { id: "duplicates", label: "Find Duplicate Files…", icon: CopyIcon, run: () => openModal("duplicates") },
       { id: "storage", label: "Analyze Storage…", icon: HardDrive, run: () => openModal("storage") },
       { id: "recents", label: "Show Recent Files…", icon: Clock, run: () => openModal("recents") },
+      { id: "trash", label: "Open Trash…", icon: Trash2, run: () => openModal("trash") },
       {
         id: "terminal",
         label: "Open Terminal Here",

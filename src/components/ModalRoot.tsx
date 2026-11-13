@@ -17,6 +17,7 @@ import { ContentSearchDialog } from "@/components/dialogs/ContentSearchDialog";
 import { AboutDialog } from "@/components/dialogs/AboutDialog";
 import { ShortcutsDialog } from "@/components/dialogs/ShortcutsDialog";
 import { SettingsDialog } from "@/components/dialogs/SettingsDialog";
+import { TrashDialog } from "@/components/dialogs/TrashDialog";
 
 export function ModalRoot() {
   const modal = useUiStore((s) => s.modal);
@@ -60,6 +61,8 @@ export function ModalRoot() {
       return <ShortcutsDialog />;
     case "settings":
       return <SettingsDialog />;
+    case "trash":
+      return <TrashDialog />;
     default:
       return null;
   }

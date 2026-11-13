@@ -21,6 +21,7 @@ export type ModalKind =
   | "contentSearch"
   | "shortcuts"
   | "settings"
+  | "trash"
   | "about";
 
 export type UndoAction =

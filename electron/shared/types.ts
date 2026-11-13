@@ -160,6 +160,15 @@ export interface PptxPreview {
   slides: string[];
 }
 
+export interface TrashItem {
+  id: string;
+  name: string;
+  size: number;
+  deletedAt: number | null;
+  originalPath: string | null;
+  isDirectory: boolean;
+}
+
 export interface ContentSearchResult {
   path: string;
   snippet: string;

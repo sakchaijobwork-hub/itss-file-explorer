@@ -18,6 +18,7 @@ import type {
   XlsxPreview,
   PptxPreview,
   ContentSearchResult,
+  TrashItem,
 } from "./shared/types";
 import type { TagColor } from "./features/tags";
 import type { FavoriteEntry } from "./features/favorites";
@@ -220,6 +221,16 @@ const api = {
     ipcRenderer.on("menu:action", listener);
     return () => ipcRenderer.removeListener("menu:action", listener);
   },
+
+  listTemplates: (): Promise<{ name: string; path: string }[]> => ipcRenderer.invoke("templates:list"),
+  createFromTemplate: (templatePath: string, destDir: string): Promise<string> =>
+    ipcRenderer.invoke("templates:createFrom", templatePath, destDir),
+  openTemplatesFolder: (): Promise<string> => ipcRenderer.invoke("templates:openFolder"),
+
+  listTrash: (): Promise<TrashItem[]> => ipcRenderer.invoke("trash:list"),
+  restoreTrashItem: (id: string, destPath: string): Promise<void> =>
+    ipcRenderer.invoke("trash:restore", id, destPath),
+  deleteTrashItemForever: (id: string): Promise<void> => ipcRenderer.invoke("trash:deleteForever", id),
 };
 
 contextBridge.exposeInMainWorld("fileAPI", api);

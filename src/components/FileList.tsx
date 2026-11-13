@@ -54,7 +54,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const gridIconSize = useUiStore((s) => s.gridIconSize);
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
 
-  const { renameEntry, openEntry, deleteSelection, copySelection, cutSelection, paste } =
+  const { renameEntry, openEntry, deleteSelection, copySelection, cutSelection, paste, createNewFolder, createNewFile } =
     useFileOperations();
 
   const visibleEntries = useMemo(() => {
@@ -128,6 +128,8 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           ? (tagsMap[singlePath] ?? [])
           : [];
 
+    const templates = entry ? [] : await window.fileAPI.listTemplates();
+
     const items = entry
       ? [
           { id: "open", label: "Open" },
@@ -200,6 +202,15 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       : [
           { id: "newFolder", label: "New Folder" },
           { id: "newFile", label: "New File" },
+          {
+            id: "newFromTemplate",
+            label: "New From Template",
+            submenu: [
+              ...templates.map((t) => ({ id: `template:${t.path}`, label: t.name })),
+              { type: "separator" as const, id: "tpl-sep", label: "" },
+              { id: "manageTemplates", label: "Manage Templates…" },
+            ],
+          },
           { id: "paste", label: "Paste", enabled: clipboard.paths.length > 0 },
           { type: "separator" as const, id: "sep1", label: "" },
           { id: "openTerminal", label: "Open Terminal Here" },
@@ -335,6 +346,23 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       case "compare":
         openModal("compare");
         break;
+      case "newFolder":
+        createNewFolder();
+        break;
+      case "newFile":
+        createNewFile();
+        break;
+      case "manageTemplates":
+        window.fileAPI.openTemplatesFolder();
+        break;
+      default:
+        if (action.startsWith("template:") && activeTab) {
+          const templatePath = action.slice("template:".length);
+          window.fileAPI.createFromTemplate(templatePath, activeTab.path).then((target) => {
+            startRename(target);
+            select(target, "single");
+          });
+        }
     }
   }
 
