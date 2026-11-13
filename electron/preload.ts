@@ -205,6 +205,8 @@ const api = {
   previewDocx: (filePath: string): Promise<DocxPreview> => ipcRenderer.invoke("office:previewDocx", filePath),
   previewXlsx: (filePath: string): Promise<XlsxPreview> => ipcRenderer.invoke("office:previewXlsx", filePath),
   previewPptx: (filePath: string): Promise<PptxPreview> => ipcRenderer.invoke("office:previewPptx", filePath),
+  exportPreviewToPdf: (filePath: string, destPath: string): Promise<string> =>
+    ipcRenderer.invoke("office:exportPreviewToPdf", filePath, destPath),
 
   listFavorites: (): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:list"),
   addFavorite: (folderPath: string): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:add", folderPath),

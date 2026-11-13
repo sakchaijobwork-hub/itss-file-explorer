@@ -1,9 +1,14 @@
-import { ipcMain } from "electron";
+import { ipcMain, BrowserWindow } from "electron";
 import * as fs from "node:fs/promises";
+import * as path from "node:path";
 import AdmZip from "adm-zip";
 import * as XLSX from "xlsx";
 import mammoth from "mammoth";
 import type { DocxPreview, XlsxPreview, PptxPreview } from "../shared/types";
+
+const DOCX_EXTS = new Set(["docx", "docm", "dotx", "dotm"]);
+const XLSX_EXTS = new Set(["xls", "xlsx", "xlsm", "xltx", "xltm"]);
+const PPTX_EXTS = new Set(["pptx", "pptm", "ppsx", "ppsm", "potx", "potm"]);
 
 const MAX_ROWS = 200;
 const MAX_COLS = 30;
@@ -171,8 +176,67 @@ async function previewPptx(filePath: string): Promise<PptxPreview> {
   return { slideCount: slides.length, slides: slides.slice(0, 60) };
 }
 
+function htmlDocument(title: string, bodyHtml: string): string {
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+<style>
+  body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #111; padding: 24px; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 16px; }
+  td, th { border: 1px solid #ccc; padding: 3px 6px; font-size: 11px; }
+  .slide { border: 1px solid #ccc; border-radius: 6px; padding: 12px; margin-bottom: 12px; page-break-inside: avoid; }
+  .slide-label { font-size: 10px; color: #888; margin-bottom: 4px; }
+</style></head><body>${bodyHtml}</body></html>`;
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+async function buildExportHtml(filePath: string, ext: string): Promise<string> {
+  const name = path.basename(filePath);
+  if (DOCX_EXTS.has(ext)) {
+    const doc = await previewDocx(filePath);
+    return htmlDocument(name, doc.html);
+  }
+  if (XLSX_EXTS.has(ext)) {
+    const xlsx = await previewXlsx(filePath);
+    const body = xlsx.sheets
+      .map((sheet) => {
+        const rows = sheet.rows
+          .map((row) => `<tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join("")}</tr>`)
+          .join("");
+        return `<h3>${escapeHtml(sheet.name)}</h3><table>${rows}</table>`;
+      })
+      .join("");
+    return htmlDocument(name, body);
+  }
+  if (PPTX_EXTS.has(ext)) {
+    const pptx = await previewPptx(filePath);
+    const body = pptx.slides
+      .map((text, i) => `<div class="slide"><div class="slide-label">Slide ${i + 1}</div><div>${escapeHtml(text).replace(/\n/g, "<br>")}</div></div>`)
+      .join("");
+    return htmlDocument(name, body);
+  }
+  throw new PreviewError("Exporting to PDF is only supported for Word, Excel, and PowerPoint previews.");
+}
+
+export async function exportPreviewToPdf(filePath: string, destPath: string): Promise<string> {
+  const ext = path.extname(filePath).slice(1).toLowerCase();
+  const html = await buildExportHtml(filePath, ext);
+
+  const win = new BrowserWindow({ show: false, webPreferences: { offscreen: true } });
+  try {
+    await win.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+    const pdfBuffer = await win.webContents.printToPDF({ printBackground: true });
+    await fs.writeFile(destPath, pdfBuffer);
+    return destPath;
+  } finally {
+    win.destroy();
+  }
+}
+
 export function registerOfficeIpc() {
   ipcMain.handle("office:previewDocx", (_e, filePath: string) => previewDocx(filePath));
   ipcMain.handle("office:previewXlsx", (_e, filePath: string) => previewXlsx(filePath));
   ipcMain.handle("office:previewPptx", (_e, filePath: string) => previewPptx(filePath));
+  ipcMain.handle("office:exportPreviewToPdf", (_e, filePath: string, destPath: string) => exportPreviewToPdf(filePath, destPath));
 }

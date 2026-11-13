@@ -12,6 +12,11 @@ import type { FileEntry, SortKey, TagColor, ViewMode } from "@/types";
 import { TAG_COLORS } from "@/types";
 
 const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp"]);
+const OFFICE_PREVIEW_EXTS = new Set([
+  "docx", "docm", "dotx", "dotm",
+  "xls", "xlsx", "xlsm", "xltx", "xltm",
+  "pptx", "pptm", "ppsx", "ppsm", "potx", "potm",
+]);
 const VIDEO_EXTS = new Set(["mp4", "webm", "mov", "m4v"]);
 
 const TAG_HEX: Record<TagColor, string> = {
@@ -204,6 +209,11 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
               selectedList.some((p) => p.toLowerCase().endsWith(".pdf")) ||
               selectedList.every((p) => /\.(png|jpe?g)$/i.test(p)),
           },
+          {
+            id: "exportPdf",
+            label: "Export to PDF…",
+            enabled: selectionCount === 1 && OFFICE_PREVIEW_EXTS.has(entry.extension),
+          },
           { id: "share", label: "Share on Local Network…" },
           { id: "notes", label: "Note…", enabled: selectionCount === 1 },
           { type: "separator" as const, id: "sep5", label: "" },
@@ -352,6 +362,20 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       case "pdfTools":
         openModal("pdfTools", selectedList);
         break;
+      case "exportPdf": {
+        if (!entry) break;
+        const baseName = entry.name.replace(/\.[^.]+$/, "");
+        const defaultPath = `${activeTab?.path ?? ""}/${baseName}.pdf`;
+        const dest = await window.fileAPI.saveDialog(defaultPath, [{ name: "PDF Document", extensions: ["pdf"] }]);
+        if (dest) {
+          try {
+            await window.fileAPI.exportPreviewToPdf(entry.path, dest);
+          } catch (err) {
+            alert(err instanceof Error ? err.message : "Could not export to PDF.");
+          }
+        }
+        break;
+      }
       case "share":
         openModal("share", selectedList);
         break;

@@ -140,6 +140,7 @@ export interface FileAPI {
   previewDocx: (filePath: string) => Promise<DocxPreview>;
   previewXlsx: (filePath: string) => Promise<XlsxPreview>;
   previewPptx: (filePath: string) => Promise<PptxPreview>;
+  exportPreviewToPdf: (filePath: string, destPath: string) => Promise<string>;
 
   listFavorites: () => Promise<FavoriteEntry[]>;
   addFavorite: (folderPath: string) => Promise<FavoriteEntry[]>;
