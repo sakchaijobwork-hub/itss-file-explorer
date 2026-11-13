@@ -32,6 +32,13 @@ async function saveStore() {
   await fs.writeFile(getStorePath(), JSON.stringify(cache ?? {}, null, 2));
 }
 
+export async function addTagToFile(filePath: string, tag: TagColor) {
+  const store = await loadStore();
+  const existing = store[filePath] ?? [];
+  if (!existing.includes(tag)) store[filePath] = [...existing, tag];
+  await saveStore();
+}
+
 export function registerTagsIpc() {
   ipcMain.handle("tags:getAll", async () => loadStore());
 

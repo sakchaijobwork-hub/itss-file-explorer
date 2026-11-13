@@ -23,6 +23,8 @@ import {
   Undo2,
   Redo2,
   Settings,
+  Keyboard,
+  Info,
 } from "lucide-react";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileStore } from "@/store/useFileStore";
@@ -74,6 +76,8 @@ export function CommandPalette() {
       { id: "automation", label: "Folder Automation Rules…", icon: Zap, run: () => openModal("automation") },
       { id: "plugins", label: "Plugins…", icon: Puzzle, run: () => openModal("plugins") },
       { id: "settings", label: "Settings…", icon: Settings, run: () => openModal("settings") },
+      { id: "shortcuts-help", label: "Keyboard Shortcuts…", icon: Keyboard, run: () => openModal("shortcuts") },
+      { id: "about", label: "About ITSS File Explorer…", icon: Info, run: () => openModal("about") },
       { id: "compare", label: "Compare / Sync Folders…", icon: GitCompare, run: () => openModal("compare") },
       { id: "newWindow", label: "New Window", icon: AppWindow, run: () => window.fileAPI.newWindow() },
       { id: "contentSearch", label: "Search File Contents…", icon: FileSearch, run: () => openModal("contentSearch") },

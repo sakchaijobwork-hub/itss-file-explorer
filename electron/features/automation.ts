@@ -3,6 +3,7 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import chokidar, { FSWatcher } from "chokidar";
 import type { AutomationRule } from "../shared/types";
+import { addTagToFile, type TagColor } from "./tags";
 
 let storePath: string;
 let cache: AutomationRule[] | null = null;
@@ -32,8 +33,6 @@ function globToRegex(glob: string): RegExp {
   return new RegExp(`^${escaped}$`, "i");
 }
 
-const tagsStorePath = () => path.join(app.getPath("userData"), "tags.json");
-
 async function applyAction(rule: AutomationRule, filePath: string) {
   try {
     if (rule.action === "move" && rule.destDir) {
@@ -46,15 +45,7 @@ async function applyAction(rule: AutomationRule, filePath: string) {
       const newName = rule.renamePattern.replaceAll("{name}", base).replaceAll("{ext}", ext.replace(".", ""));
       await fs.rename(filePath, path.join(path.dirname(filePath), newName));
     } else if (rule.action === "tag" && rule.tag) {
-      let store: Record<string, string[]> = {};
-      try {
-        store = JSON.parse(await fs.readFile(tagsStorePath(), "utf8"));
-      } catch {
-        store = {};
-      }
-      const existing = store[filePath] ?? [];
-      if (!existing.includes(rule.tag)) store[filePath] = [...existing, rule.tag];
-      await fs.writeFile(tagsStorePath(), JSON.stringify(store, null, 2));
+      await addTagToFile(filePath, rule.tag as TagColor);
     }
   } catch {
     // best-effort automation

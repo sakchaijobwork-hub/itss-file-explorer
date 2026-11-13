@@ -191,7 +191,15 @@ function buildAppMenu() {
     },
   ];
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+  // On Windows/Linux the window already has a fully custom chrome (frameless,
+  // own tab bar + toolbar replicating every action here), so a native menu
+  // bar would just duplicate it and eat window space. macOS's menu bar lives
+  // in the system bar (no window space cost) and some Edit roles (cut/copy/
+  // paste/selectAll) are required there for those shortcuts to work in text
+  // fields at all, so we keep it only on macOS; the same actions remain
+  // reachable via the Command Palette and the in-app keyboard shortcuts on
+  // every platform.
+  Menu.setApplicationMenu(isMac ? Menu.buildFromTemplate(template) : null);
 }
 
 app.whenReady().then(() => {
