@@ -14,6 +14,9 @@ import type {
   PluginInfo,
   ShareInfo,
   CompareResult,
+  DocxPreview,
+  XlsxPreview,
+  PptxPreview,
 } from "./shared/types";
 import type { TagColor } from "./features/tags";
 
@@ -123,6 +126,7 @@ const api = {
 
   // system
   openTerminal: (dirPath: string) => ipcRenderer.invoke("system:openTerminal", dirPath),
+  openWith: (filePath: string): Promise<boolean> => ipcRenderer.invoke("system:openWith", filePath),
   getGitStatus: (dirPath: string): Promise<GitStatusResult> => ipcRenderer.invoke("system:getGitStatus", dirPath),
 
   // preview
@@ -186,6 +190,10 @@ const api = {
 
   compareDirs: (pathA: string, pathB: string): Promise<CompareResult> =>
     ipcRenderer.invoke("fs:compareDirs", pathA, pathB),
+
+  previewDocx: (filePath: string): Promise<DocxPreview> => ipcRenderer.invoke("office:previewDocx", filePath),
+  previewXlsx: (filePath: string): Promise<XlsxPreview> => ipcRenderer.invoke("office:previewXlsx", filePath),
+  previewPptx: (filePath: string): Promise<PptxPreview> => ipcRenderer.invoke("office:previewPptx", filePath),
 };
 
 contextBridge.exposeInMainWorld("fileAPI", api);

@@ -27,7 +27,7 @@ export interface OperationProgress {
 
 export type SortKey = "name" | "size" | "modifiedAt" | "type";
 export type SortDirection = "asc" | "desc";
-export type ViewMode = "grid" | "list" | "details";
+export type ViewMode = "grid" | "list" | "details" | "columns";
 
 export interface QuickAccessItem {
   name: string;
@@ -153,4 +153,25 @@ export interface CompareResult {
   onlyRight: string[];
   different: string[];
   same: string[];
+}
+
+export interface DocxPreview {
+  html: string;
+  warnings: string[];
+}
+
+export interface XlsxSheetPreview {
+  name: string;
+  rows: string[][];
+  truncated: boolean;
+  totalRows: number;
+}
+
+export interface XlsxPreview {
+  sheets: XlsxSheetPreview[];
+}
+
+export interface PptxPreview {
+  slideCount: number;
+  slides: string[];
 }

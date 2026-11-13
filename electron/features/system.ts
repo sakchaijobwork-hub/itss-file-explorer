@@ -1,4 +1,4 @@
-import { ipcMain } from "electron";
+import { ipcMain, dialog, BrowserWindow } from "electron";
 import { spawn, exec } from "node:child_process";
 import { promisify } from "node:util";
 import * as fs from "node:fs/promises";
@@ -52,7 +52,37 @@ async function getGitStatus(dirPath: string): Promise<GitStatusResult> {
   }
 }
 
+async function openWith(e: Electron.IpcMainInvokeEvent, filePath: string): Promise<boolean> {
+  const win = BrowserWindow.fromWebContents(e.sender) ?? undefined;
+  if (process.platform === "darwin") {
+    const result = await dialog.showOpenDialog(win as BrowserWindow, {
+      title: "Choose Application",
+      defaultPath: "/Applications",
+      properties: ["openFile"],
+      filters: [{ name: "Applications", extensions: ["app"] }],
+    });
+    if (result.canceled || result.filePaths.length === 0) return false;
+    spawn("open", ["-a", result.filePaths[0], filePath], { detached: true, stdio: "ignore" }).unref();
+    return true;
+  }
+  if (process.platform === "win32") {
+    const result = await dialog.showOpenDialog(win as BrowserWindow, {
+      title: "Choose Application",
+      properties: ["openFile"],
+      filters: [{ name: "Executable", extensions: ["exe"] }],
+    });
+    if (result.canceled || result.filePaths.length === 0) return false;
+    spawn(result.filePaths[0], [filePath], { detached: true, stdio: "ignore" }).unref();
+    return true;
+  }
+  const result = await dialog.showOpenDialog(win as BrowserWindow, { title: "Choose Application", properties: ["openFile"] });
+  if (result.canceled || result.filePaths.length === 0) return false;
+  spawn(result.filePaths[0], [filePath], { detached: true, stdio: "ignore" }).unref();
+  return true;
+}
+
 export function registerSystemIpc() {
   ipcMain.handle("system:openTerminal", (_e, dirPath: string) => openTerminal(dirPath));
   ipcMain.handle("system:getGitStatus", (_e, dirPath: string) => getGitStatus(dirPath));
+  ipcMain.handle("system:openWith", (e, filePath: string) => openWith(e, filePath));
 }

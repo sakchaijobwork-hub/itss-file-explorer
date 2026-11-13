@@ -8,12 +8,14 @@ import { Toolbar } from "@/components/Toolbar";
 import { Breadcrumb } from "@/components/Breadcrumb";
 import { Sidebar } from "@/components/Sidebar";
 import { FileList } from "@/components/FileList";
+import { ColumnView } from "@/components/ColumnView";
 import { StatusBar } from "@/components/StatusBar";
 import { ProgressToast } from "@/components/ProgressToast";
 import { PreviewPanel } from "@/components/PreviewPanel";
 import { SecondaryPane } from "@/components/SecondaryPane";
 import { CommandPalette } from "@/components/CommandPalette";
 import { ModalRoot } from "@/components/ModalRoot";
+import { QuickLookOverlay } from "@/components/QuickLookOverlay";
 
 export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -27,6 +29,10 @@ export default function App() {
   const commandPaletteOpen = useUiStore((s) => s.commandPaletteOpen);
   const setCommandPaletteOpen = useUiStore((s) => s.setCommandPaletteOpen);
   const loadTags = useUiStore((s) => s.loadTags);
+  const viewMode = useFileStore((s) => s.viewMode);
+  const quickLookPath = useUiStore((s) => s.quickLookPath);
+  const openQuickLook = useUiStore((s) => s.openQuickLook);
+  const closeQuickLook = useUiStore((s) => s.closeQuickLook);
 
   const { copySelection, cutSelection, paste, deleteSelection, createNewFolder } = useFileOperations();
 
@@ -69,6 +75,17 @@ export default function App() {
       } else if (e.key === "Enter" && selectedPaths.size === 1) {
         e.preventDefault();
         startRename(Array.from(selectedPaths)[0]);
+      } else if (e.key === " " && !mod) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+        e.preventDefault();
+        if (quickLookPath) {
+          closeQuickLook();
+        } else if (selectedPaths.size === 1) {
+          openQuickLook(Array.from(selectedPaths)[0]);
+        }
+      } else if (e.key === "Escape" && quickLookPath) {
+        closeQuickLook();
       }
     }
     window.addEventListener("keydown", onKeyDown);
@@ -85,6 +102,9 @@ export default function App() {
     renamingPath,
     commandPaletteOpen,
     setCommandPaletteOpen,
+    quickLookPath,
+    openQuickLook,
+    closeQuickLook,
   ]);
 
   return (
@@ -94,7 +114,7 @@ export default function App() {
       <Breadcrumb />
       <div className="relative flex flex-1 overflow-hidden">
         <Sidebar />
-        <FileList searchQuery={searchQuery} />
+        {viewMode === "columns" ? <ColumnView /> : <FileList searchQuery={searchQuery} />}
         {dualPane && <SecondaryPane />}
         <PreviewPanel />
         <ProgressToast />
@@ -102,6 +122,7 @@ export default function App() {
       <StatusBar />
       <CommandPalette />
       <ModalRoot />
+      <QuickLookOverlay />
     </div>
   );
 }

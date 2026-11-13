@@ -21,6 +21,7 @@ import { registerNotesIpc } from "./features/notes";
 import { registerAutomationIpc } from "./features/automation";
 import { registerPluginsIpc } from "./features/plugins";
 import { registerCompareIpc } from "./features/compare";
+import { registerOfficeIpc } from "./features/office";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -76,6 +77,7 @@ app.whenReady().then(() => {
   registerAutomationIpc();
   registerPluginsIpc();
   registerCompareIpc();
+  registerOfficeIpc();
 
   createWindow();
 

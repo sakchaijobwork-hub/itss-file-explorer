@@ -138,3 +138,24 @@ export interface CompareResult {
   different: string[];
   same: string[];
 }
+
+export interface DocxPreview {
+  html: string;
+  warnings: string[];
+}
+
+export interface XlsxSheetPreview {
+  name: string;
+  rows: string[][];
+  truncated: boolean;
+  totalRows: number;
+}
+
+export interface XlsxPreview {
+  sheets: XlsxSheetPreview[];
+}
+
+export interface PptxPreview {
+  slideCount: number;
+  slides: string[];
+}

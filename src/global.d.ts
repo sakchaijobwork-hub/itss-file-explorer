@@ -17,6 +17,9 @@ import type {
   PluginInfo,
   ShareInfo,
   CompareResult,
+  DocxPreview,
+  XlsxPreview,
+  PptxPreview,
 } from "./types";
 
 export interface ContextMenuItem {
@@ -81,6 +84,7 @@ export interface FileAPI {
   setPermissions: (targetPath: string, octal: string) => Promise<PermissionsInfo>;
 
   openTerminal: (dirPath: string) => Promise<void>;
+  openWith: (filePath: string) => Promise<boolean>;
   getGitStatus: (dirPath: string) => Promise<GitStatusResult>;
 
   readTextPreview: (filePath: string) => Promise<TextPreviewResult>;
@@ -122,6 +126,10 @@ export interface FileAPI {
   openPluginsFolder: () => Promise<string>;
 
   compareDirs: (pathA: string, pathB: string) => Promise<CompareResult>;
+
+  previewDocx: (filePath: string) => Promise<DocxPreview>;
+  previewXlsx: (filePath: string) => Promise<XlsxPreview>;
+  previewPptx: (filePath: string) => Promise<PptxPreview>;
 }
 
 declare global {

@@ -7,7 +7,7 @@ import { useFileOperations } from "@/hooks/useFileOperations";
 import { getFileIconComponent } from "@/utils/fileIcon";
 import { formatBytes, formatDate } from "@/utils/format";
 import { RenameInput } from "./RenameInput";
-import type { FileEntry, SortKey, TagColor } from "@/types";
+import type { FileEntry, SortKey, TagColor, ViewMode } from "@/types";
 import { TAG_COLORS } from "@/types";
 
 const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "bmp"]);
@@ -49,6 +49,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const tagsMap = useUiStore((s) => s.tagsMap);
   const toggleTag = useUiStore((s) => s.toggleTag);
   const openModal = useUiStore((s) => s.openModal);
+  const gridIconSize = useUiStore((s) => s.gridIconSize);
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
 
   const { renameEntry, openEntry, deleteSelection, copySelection, cutSelection, paste } =
@@ -79,6 +80,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     const items = entry
       ? [
           { id: "open", label: "Open" },
+          { id: "openWith", label: "Open With…", enabled: !entry.isDirectory },
           { id: "showInFolder", label: "Show in Finder/Explorer" },
           { type: "separator" as const, id: "sep1", label: "" },
           { id: "cut", label: "Cut" },
@@ -165,6 +167,9 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         break;
       case "showInFolder":
         if (entry) window.fileAPI.showInFolder(entry.path);
+        break;
+      case "openWith":
+        if (entry) window.fileAPI.openWith(entry.path);
         break;
       case "cut":
         cutSelection();
@@ -295,10 +300,11 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       )}
       <div
         className={clsx(
-          viewMode === "grid" && "grid grid-cols-[repeat(auto-fill,minmax(96px,1fr))] gap-1",
+          viewMode === "grid" && "grid gap-1",
           viewMode === "list" && "flex flex-col gap-0.5",
           viewMode === "details" && "flex flex-col"
         )}
+        style={viewMode === "grid" ? { gridTemplateColumns: `repeat(auto-fill, minmax(${gridIconSize}px, 1fr))` } : undefined}
       >
         {visibleEntries.map((entry) => (
           <FileItem
@@ -309,6 +315,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             isCut={clipboard.mode === "cut" && clipboard.paths.includes(entry.path)}
             isRenaming={renamingPath === entry.path}
             tags={tagsMap[entry.path] ?? []}
+            iconSize={gridIconSize}
             onSelect={(e) => select(entry.path, selectMode(e))}
             onOpen={() => handleOpen(entry)}
             onDragStart={(e) => {
@@ -382,6 +389,7 @@ function FileItem({
   isCut,
   isRenaming,
   tags,
+  iconSize = 96,
   onSelect,
   onOpen,
   onContextMenu,
@@ -390,11 +398,12 @@ function FileItem({
   onDragStart,
 }: {
   entry: FileEntry;
-  viewMode: "grid" | "list" | "details";
+  viewMode: ViewMode;
   isSelected: boolean;
   isCut: boolean;
   isRenaming: boolean;
   tags: TagColor[];
+  iconSize?: number;
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
@@ -408,8 +417,10 @@ function FileItem({
 
   const nameNode = isRenaming ? (
     <RenameInput defaultValue={entry.name} onCommit={onCommitRename} onCancel={onCancelRename} className={inputClass} />
+  ) : viewMode === "grid" ? (
+    <span className="line-clamp-2 block w-full break-words">{entry.name}</span>
   ) : (
-    <span className="truncate">{entry.name}</span>
+    <span className="block min-w-0 flex-1 truncate">{entry.name}</span>
   );
 
   const baseClasses = clsx(
@@ -432,7 +443,10 @@ function FileItem({
         onDragStart={onDragStart}
         title={entry.name}
       >
-        <Icon className={clsx("h-9 w-9", entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")} />
+        <Icon
+          className={clsx(entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")}
+          style={{ width: Math.round(iconSize * 0.4), height: Math.round(iconSize * 0.4) }}
+        />
         <div className="w-full text-[11px] leading-tight text-gray-800 dark:text-gray-200">{nameNode}</div>
         <TagDots tags={tags} />
       </div>

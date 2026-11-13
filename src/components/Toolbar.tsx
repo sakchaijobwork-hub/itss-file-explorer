@@ -6,6 +6,7 @@ import {
   Grid2x2,
   List,
   Rows3,
+  Columns3,
   FolderPlus,
   FilePlus,
   Trash2,
@@ -77,6 +78,8 @@ export function Toolbar({ onSearch }: { onSearch: (q: string) => void }) {
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
 
   const dualPane = useUiStore((s) => s.dualPane);
+  const gridIconSize = useUiStore((s) => s.gridIconSize);
+  const setGridIconSize = useUiStore((s) => s.setGridIconSize);
   const toggleDualPane = useUiStore((s) => s.toggleDualPane);
   const previewOpen = useUiStore((s) => s.previewOpen);
   const togglePreview = useUiStore((s) => s.togglePreview);
@@ -150,6 +153,22 @@ export function Toolbar({ onSearch }: { onSearch: (q: string) => void }) {
       <ToolbarButton onClick={() => setViewMode("details")} active={viewMode === "details"} title="Details View">
         <Rows3 className="h-4 w-4" />
       </ToolbarButton>
+      <ToolbarButton onClick={() => setViewMode("columns")} active={viewMode === "columns"} title="Column View">
+        <Columns3 className="h-4 w-4" />
+      </ToolbarButton>
+
+      {viewMode === "grid" && (
+        <input
+          type="range"
+          min={72}
+          max={160}
+          step={8}
+          value={gridIconSize}
+          onChange={(e) => setGridIconSize(Number(e.target.value))}
+          title="Icon size"
+          className="mx-1 h-1.5 w-16 accent-accent"
+        />
+      )}
 
       <div className="mx-1 h-5 w-px bg-black/10 dark:bg-white/10" />
 

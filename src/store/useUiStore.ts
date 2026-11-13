@@ -26,6 +26,8 @@ interface UiState {
   dualPane: boolean;
   modal: ModalKind;
   modalTargetPaths: string[];
+  quickLookPath: string | null;
+  gridIconSize: number;
 
   tagsMap: Record<string, TagColor[]>;
 
@@ -34,6 +36,9 @@ interface UiState {
   toggleDualPane: () => void;
   openModal: (modal: Exclude<ModalKind, null>, targetPaths?: string[]) => void;
   closeModal: () => void;
+  openQuickLook: (filePath: string) => void;
+  closeQuickLook: () => void;
+  setGridIconSize: (size: number) => void;
 
   loadTags: () => Promise<void>;
   toggleTag: (filePath: string, tag: TagColor) => Promise<void>;
@@ -45,6 +50,8 @@ export const useUiStore = create<UiState>((set, get) => ({
   dualPane: false,
   modal: null,
   modalTargetPaths: [],
+  quickLookPath: null,
+  gridIconSize: 96,
 
   tagsMap: {},
 
@@ -53,6 +60,9 @@ export const useUiStore = create<UiState>((set, get) => ({
   toggleDualPane: () => set((s) => ({ dualPane: !s.dualPane })),
   openModal: (modal, targetPaths = []) => set({ modal, modalTargetPaths: targetPaths }),
   closeModal: () => set({ modal: null, modalTargetPaths: [] }),
+  openQuickLook: (filePath) => set({ quickLookPath: filePath }),
+  closeQuickLook: () => set({ quickLookPath: null }),
+  setGridIconSize: (size) => set({ gridIconSize: size }),
 
   loadTags: async () => {
     const tagsMap = await window.fileAPI.getAllTags();
