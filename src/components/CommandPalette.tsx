@@ -18,6 +18,8 @@ import {
   Zap,
   Puzzle,
   GitCompare,
+  AppWindow,
+  FileSearch,
 } from "lucide-react";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileStore } from "@/store/useFileStore";
@@ -67,6 +69,8 @@ export function CommandPalette() {
       { id: "automation", label: "Folder Automation Rules…", icon: Zap, run: () => openModal("automation") },
       { id: "plugins", label: "Plugins…", icon: Puzzle, run: () => openModal("plugins") },
       { id: "compare", label: "Compare / Sync Folders…", icon: GitCompare, run: () => openModal("compare") },
+      { id: "newWindow", label: "New Window", icon: AppWindow, run: () => window.fileAPI.newWindow() },
+      { id: "contentSearch", label: "Search File Contents…", icon: FileSearch, run: () => openModal("contentSearch") },
     ],
     [setViewMode, createNewFolder, toggleTheme, toggleDualPane, togglePreview, openModal, activeTab]
   );

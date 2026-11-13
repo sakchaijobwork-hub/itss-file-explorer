@@ -17,8 +17,10 @@ import type {
   DocxPreview,
   XlsxPreview,
   PptxPreview,
+  ContentSearchResult,
 } from "./shared/types";
 import type { TagColor } from "./features/tags";
+import type { FavoriteEntry } from "./features/favorites";
 
 export interface QuickAccessItem {
   name: string;
@@ -109,8 +111,10 @@ const api = {
   // archive
   compress: (sourcePaths: string[], destZipPath: string): Promise<string> =>
     ipcRenderer.invoke("fs:compress", sourcePaths, destZipPath),
-  extract: (zipPath: string, destDir: string): Promise<string> =>
-    ipcRenderer.invoke("fs:extract", zipPath, destDir),
+  extract: (archivePath: string, destDir: string): Promise<string> =>
+    ipcRenderer.invoke("fs:extract", archivePath, destDir),
+  compressTar: (sourcePaths: string[], destTarPath: string, gzip: boolean): Promise<string> =>
+    ipcRenderer.invoke("fs:compressTar", sourcePaths, destTarPath, gzip),
   listZip: (zipPath: string) => ipcRenderer.invoke("fs:listZip", zipPath),
 
   // security
@@ -194,6 +198,22 @@ const api = {
   previewDocx: (filePath: string): Promise<DocxPreview> => ipcRenderer.invoke("office:previewDocx", filePath),
   previewXlsx: (filePath: string): Promise<XlsxPreview> => ipcRenderer.invoke("office:previewXlsx", filePath),
   previewPptx: (filePath: string): Promise<PptxPreview> => ipcRenderer.invoke("office:previewPptx", filePath),
+
+  listFavorites: (): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:list"),
+  addFavorite: (folderPath: string): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:add", folderPath),
+  removeFavorite: (folderPath: string): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:remove", folderPath),
+
+  newWindow: (): Promise<void> => ipcRenderer.invoke("system:newWindow"),
+  getDiskSpace: (targetPath: string): Promise<{ total: number; free: number; used: number }> =>
+    ipcRenderer.invoke("fs:getDiskSpace", targetPath),
+
+  searchContent: (rootDir: string, query: string, opId: string): Promise<ContentSearchResult[]> =>
+    ipcRenderer.invoke("fs:searchContent", rootDir, query, opId),
+  onSearchProgress: (callback: (p: { id: string; scanned: number; found: number }) => void) => {
+    const listener = (_e: unknown, p: { id: string; scanned: number; found: number }) => callback(p);
+    ipcRenderer.on("fs:searchProgress", listener);
+    return () => ipcRenderer.removeListener("fs:searchProgress", listener);
+  },
 };
 
 contextBridge.exposeInMainWorld("fileAPI", api);

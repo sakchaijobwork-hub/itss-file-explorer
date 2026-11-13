@@ -18,6 +18,7 @@ import {
   Eye,
   EyeOff,
   Search,
+  FileSearch,
   Columns2,
   Copy as CopyIcon,
   HardDrive,
@@ -141,6 +142,9 @@ export function Toolbar({ onSearch }: { onSearch: (q: string) => void }) {
           className="h-7 w-full rounded-md bg-black/5 pl-7 pr-2 text-xs outline-none placeholder:text-gray-400 focus:bg-black/10 dark:bg-white/5 dark:focus:bg-white/10"
         />
       </div>
+      <ToolbarButton onClick={() => openModal("contentSearch")} title="Search File Contents (⌘⇧F)">
+        <FileSearch className="h-4 w-4" />
+      </ToolbarButton>
 
       <div className="flex-1" />
 

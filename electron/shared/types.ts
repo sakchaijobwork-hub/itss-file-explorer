@@ -159,3 +159,9 @@ export interface PptxPreview {
   slideCount: number;
   slides: string[];
 }
+
+export interface ContentSearchResult {
+  path: string;
+  snippet: string;
+  lineNumber: number;
+}

@@ -12,6 +12,15 @@ const DOCX_PREVIEWABLE = new Set(["docx"]);
 const XLSX_PREVIEWABLE = new Set(["xls", "xlsx", "xlsm"]);
 const PPTX_PREVIEWABLE = new Set(["pptx", "ppsx"]);
 
+function friendlyErrorMessage(err: unknown): string {
+  if (err instanceof Error && err.message) {
+    // Electron prefixes IPC rejections with "Error invoking remote method ...: PreviewError: "
+    const match = err.message.match(/PreviewError:\s*(.+)$/s);
+    return (match ? match[1] : err.message).trim();
+  }
+  return "Could not generate a preview for this file.";
+}
+
 export function FilePreviewContent({ entry, large = false }: { entry: FileEntry; large?: boolean }) {
   const [textContent, setTextContent] = useState<{ content: string; truncated: boolean } | null>(null);
   const [docx, setDocx] = useState<DocxPreview | null>(null);
@@ -19,6 +28,7 @@ export function FilePreviewContent({ entry, large = false }: { entry: FileEntry;
   const [pptx, setPptx] = useState<PptxPreview | null>(null);
   const [activeSheet, setActiveSheet] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [previewError, setPreviewError] = useState<string | null>(null);
 
   useEffect(() => {
     setTextContent(null);
@@ -26,6 +36,7 @@ export function FilePreviewContent({ entry, large = false }: { entry: FileEntry;
     setXlsx(null);
     setPptx(null);
     setActiveSheet(0);
+    setPreviewError(null);
     if (entry.isDirectory) return;
 
     if (TEXT_EXT.has(entry.extension)) {
@@ -34,13 +45,25 @@ export function FilePreviewContent({ entry, large = false }: { entry: FileEntry;
       });
     } else if (DOCX_PREVIEWABLE.has(entry.extension)) {
       setLoading(true);
-      window.fileAPI.previewDocx(entry.path).then(setDocx).catch(() => setDocx(null)).finally(() => setLoading(false));
+      window.fileAPI
+        .previewDocx(entry.path)
+        .then(setDocx)
+        .catch((err) => setPreviewError(friendlyErrorMessage(err)))
+        .finally(() => setLoading(false));
     } else if (XLSX_PREVIEWABLE.has(entry.extension)) {
       setLoading(true);
-      window.fileAPI.previewXlsx(entry.path).then(setXlsx).catch(() => setXlsx(null)).finally(() => setLoading(false));
+      window.fileAPI
+        .previewXlsx(entry.path)
+        .then(setXlsx)
+        .catch((err) => setPreviewError(friendlyErrorMessage(err)))
+        .finally(() => setLoading(false));
     } else if (PPTX_PREVIEWABLE.has(entry.extension)) {
       setLoading(true);
-      window.fileAPI.previewPptx(entry.path).then(setPptx).catch(() => setPptx(null)).finally(() => setLoading(false));
+      window.fileAPI
+        .previewPptx(entry.path)
+        .then(setPptx)
+        .catch((err) => setPreviewError(friendlyErrorMessage(err)))
+        .finally(() => setLoading(false));
     }
   }, [entry.path]);
 
@@ -83,6 +106,21 @@ export function FilePreviewContent({ entry, large = false }: { entry: FileEntry;
 
   if (loading) {
     return <div className="rounded-lg bg-black/5 p-6 text-center text-xs text-gray-400 dark:bg-white/5">Loading preview…</div>;
+  }
+
+  if (previewError) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-lg bg-black/5 p-6 text-center dark:bg-white/5">
+        <Icon className="h-10 w-10 text-gray-400" />
+        <p className="text-xs text-gray-500 dark:text-gray-400">{previewError}</p>
+        <button
+          onClick={() => window.fileAPI.openPath(entry.path)}
+          className="rounded-md bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-hover"
+        >
+          Open in Default App
+        </button>
+      </div>
+    );
   }
 
   if (docx) {

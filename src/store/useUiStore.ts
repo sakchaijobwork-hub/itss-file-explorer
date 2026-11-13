@@ -18,6 +18,7 @@ export type ModalKind =
   | "automation"
   | "plugins"
   | "compare"
+  | "contentSearch"
   | "about";
 
 interface UiState {
@@ -28,6 +29,7 @@ interface UiState {
   modalTargetPaths: string[];
   quickLookPath: string | null;
   gridIconSize: number;
+  addressBarEditing: boolean;
 
   tagsMap: Record<string, TagColor[]>;
 
@@ -39,6 +41,7 @@ interface UiState {
   openQuickLook: (filePath: string) => void;
   closeQuickLook: () => void;
   setGridIconSize: (size: number) => void;
+  setAddressBarEditing: (editing: boolean) => void;
 
   loadTags: () => Promise<void>;
   toggleTag: (filePath: string, tag: TagColor) => Promise<void>;
@@ -52,6 +55,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   modalTargetPaths: [],
   quickLookPath: null,
   gridIconSize: 96,
+  addressBarEditing: false,
 
   tagsMap: {},
 
@@ -63,6 +67,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   openQuickLook: (filePath) => set({ quickLookPath: filePath }),
   closeQuickLook: () => set({ quickLookPath: null }),
   setGridIconSize: (size) => set({ gridIconSize: size }),
+  setAddressBarEditing: (editing) => set({ addressBarEditing: editing }),
 
   loadTags: async () => {
     const tagsMap = await window.fileAPI.getAllTags();

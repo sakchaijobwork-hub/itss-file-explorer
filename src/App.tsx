@@ -33,6 +33,8 @@ export default function App() {
   const quickLookPath = useUiStore((s) => s.quickLookPath);
   const openQuickLook = useUiStore((s) => s.openQuickLook);
   const closeQuickLook = useUiStore((s) => s.closeQuickLook);
+  const setAddressBarEditing = useUiStore((s) => s.setAddressBarEditing);
+  const openModal = useUiStore((s) => s.openModal);
 
   const { copySelection, cutSelection, paste, deleteSelection, createNewFolder } = useFileOperations();
 
@@ -54,6 +56,12 @@ export default function App() {
       if (mod && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setCommandPaletteOpen(!commandPaletteOpen);
+      } else if (mod && e.key.toLowerCase() === "l") {
+        e.preventDefault();
+        setAddressBarEditing(true);
+      } else if (mod && e.shiftKey && e.key.toLowerCase() === "f") {
+        e.preventDefault();
+        openModal("contentSearch");
       } else if (mod && e.key.toLowerCase() === "c") {
         e.preventDefault();
         copySelection();
@@ -69,6 +77,9 @@ export default function App() {
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "n") {
         e.preventDefault();
         createNewFolder();
+      } else if (mod && !e.shiftKey && e.key.toLowerCase() === "n") {
+        e.preventDefault();
+        window.fileAPI.newWindow();
       } else if (e.key === "Delete" || (e.key === "Backspace" && e.metaKey)) {
         e.preventDefault();
         deleteSelection(false);
@@ -105,6 +116,8 @@ export default function App() {
     quickLookPath,
     openQuickLook,
     closeQuickLook,
+    setAddressBarEditing,
+    openModal,
   ]);
 
   return (

@@ -22,6 +22,8 @@ import { registerAutomationIpc } from "./features/automation";
 import { registerPluginsIpc } from "./features/plugins";
 import { registerCompareIpc } from "./features/compare";
 import { registerOfficeIpc } from "./features/office";
+import { registerFavoritesIpc } from "./features/favorites";
+import { registerSearchIpc } from "./features/search";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -78,6 +80,8 @@ app.whenReady().then(() => {
   registerPluginsIpc();
   registerCompareIpc();
   registerOfficeIpc();
+  registerFavoritesIpc();
+  registerSearchIpc();
 
   createWindow();
 
@@ -276,6 +280,15 @@ ipcMain.on("fs:startDrag", (e, filePaths: string[]) => {
   if (filePaths.length === 0) return;
   const icon = nativeImage.createFromPath(dragIconPath);
   e.sender.startDrag({ file: filePaths[0], files: filePaths, icon });
+});
+
+ipcMain.handle("system:newWindow", () => createWindow());
+
+ipcMain.handle("fs:getDiskSpace", async (_e, targetPath: string) => {
+  const stat = await fs.statfs(targetPath);
+  const total = stat.blocks * stat.bsize;
+  const free = stat.bfree * stat.bsize;
+  return { total, free, used: total - free };
 });
 
 ipcMain.handle("fs:openPath", (_e, targetPath: string) => shell.openPath(targetPath));

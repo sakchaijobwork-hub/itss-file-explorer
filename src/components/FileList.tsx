@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { useFileStore, sortEntries } from "@/store/useFileStore";
@@ -65,6 +65,30 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     return sortEntries(list, sortKey, sortDirection);
   }, [entries, showHidden, searchQuery, sortKey, sortDirection]);
 
+  const typeAheadRef = useRef({ buffer: "", lastTime: 0 });
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.metaKey || e.ctrlKey || e.altKey || renamingPath) return;
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") return;
+      if (e.key.length !== 1 || !/[\p{L}\p{N}]/u.test(e.key)) return;
+
+      const now = Date.now();
+      const state = typeAheadRef.current;
+      state.buffer = now - state.lastTime > 900 ? e.key : state.buffer + e.key;
+      state.lastTime = now;
+
+      const lower = state.buffer.toLowerCase();
+      const match = visibleEntries.find((entry) => entry.name.toLowerCase().startsWith(lower));
+      if (match) {
+        select(match.path, "single");
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [visibleEntries, select, renamingPath]);
+
   async function handleOpen(entry: FileEntry) {
     if (entry.isDirectory) navigateTo(entry.path);
     else openEntry(entry.path);
@@ -82,6 +106,8 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           { id: "open", label: "Open" },
           { id: "openWith", label: "Open With…", enabled: !entry.isDirectory },
           { id: "showInFolder", label: "Show in Finder/Explorer" },
+          { id: "copyPath", label: "Copy Path" },
+          { id: "copyName", label: "Copy Name" },
           { type: "separator" as const, id: "sep1", label: "" },
           { id: "cut", label: "Cut" },
           { id: "copy", label: "Copy" },
@@ -108,9 +134,13 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             label: "Compress to Zip",
           },
           {
+            id: "compressTarGz",
+            label: "Compress to tar.gz",
+          },
+          {
             id: "extract",
             label: "Extract Here",
-            enabled: selectionCount === 1 && entry.extension === "zip",
+            enabled: selectionCount === 1 && /\.(zip|tar|tar\.gz|tgz)$/i.test(entry.name),
           },
           { type: "separator" as const, id: "sep4", label: "" },
           { id: "checksum", label: "Verify Checksum (2 files)…", enabled: selectionCount === 2 },
@@ -171,6 +201,14 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       case "openWith":
         if (entry) window.fileAPI.openWith(entry.path);
         break;
+      case "copyPath":
+        navigator.clipboard.writeText(selectedList.join("\n"));
+        break;
+      case "copyName":
+        navigator.clipboard.writeText(
+          selectedList.map((p) => p.split(/[/\\]/).pop() ?? p).join("\n")
+        );
+        break;
       case "cut":
         cutSelection();
         break;
@@ -191,6 +229,13 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         const defaultPath = `${activeTab.path}/${entry?.name ?? "archive"}.zip`;
         const dest = await window.fileAPI.saveDialog(defaultPath, [{ name: "Zip Archive", extensions: ["zip"] }]);
         if (dest) await window.fileAPI.compress(selectedList, dest);
+        break;
+      }
+      case "compressTarGz": {
+        if (!activeTab) break;
+        const defaultPath = `${activeTab.path}/${entry?.name ?? "archive"}.tar.gz`;
+        const dest = await window.fileAPI.saveDialog(defaultPath, [{ name: "Tar GZip Archive", extensions: ["tar.gz", "tgz"] }]);
+        if (dest) await window.fileAPI.compressTar(selectedList, dest, true);
         break;
       }
       case "extract": {
@@ -371,6 +416,41 @@ function DetailsHeader({
   );
 }
 
+function Thumbnail({
+  entry,
+  size,
+  className,
+  IconFallback,
+}: {
+  entry: FileEntry;
+  size: number;
+  className?: string;
+  IconFallback: ReturnType<typeof getFileIconComponent>;
+}) {
+  const [errored, setErrored] = useState(false);
+  const isImage = !entry.isDirectory && IMAGE_EXTS.has(entry.extension);
+
+  if (isImage && !errored) {
+    return (
+      <img
+        src={`file://${encodeURI(entry.path)}`}
+        alt=""
+        draggable={false}
+        onError={() => setErrored(true)}
+        className={clsx("rounded object-cover", className)}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
+  return (
+    <IconFallback
+      className={clsx(entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400", className)}
+      style={{ width: size, height: size }}
+    />
+  );
+}
+
 function TagDots({ tags }: { tags: TagColor[] }) {
   if (tags.length === 0) return null;
   return (
@@ -443,10 +523,7 @@ function FileItem({
         onDragStart={onDragStart}
         title={entry.name}
       >
-        <Icon
-          className={clsx(entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")}
-          style={{ width: Math.round(iconSize * 0.4), height: Math.round(iconSize * 0.4) }}
-        />
+        <Thumbnail entry={entry} size={Math.round(iconSize * 0.4)} IconFallback={Icon} className="shrink-0" />
         <div className="w-full text-[11px] leading-tight text-gray-800 dark:text-gray-200">{nameNode}</div>
         <TagDots tags={tags} />
       </div>
@@ -466,7 +543,7 @@ function FileItem({
         draggable
         onDragStart={onDragStart}
       >
-        <Icon className={clsx("h-4 w-4 shrink-0", entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")} />
+        <Thumbnail entry={entry} size={16} IconFallback={Icon} className="shrink-0" />
         {nameNode}
         <TagDots tags={tags} />
       </div>
@@ -487,7 +564,7 @@ function FileItem({
       onDragStart={onDragStart}
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        <Icon className={clsx("h-4 w-4 shrink-0", entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400")} />
+        <Thumbnail entry={entry} size={16} IconFallback={Icon} className="shrink-0" />
         {nameNode}
         <TagDots tags={tags} />
       </div>

@@ -20,6 +20,9 @@ import type {
   DocxPreview,
   XlsxPreview,
   PptxPreview,
+  FavoriteEntry,
+  DiskSpace,
+  ContentSearchResult,
 } from "./types";
 
 export interface ContextMenuItem {
@@ -74,7 +77,8 @@ export interface FileAPI {
   getDirStats: (rootDir: string) => Promise<DirStatsNode>;
 
   compress: (sourcePaths: string[], destZipPath: string) => Promise<string>;
-  extract: (zipPath: string, destDir: string) => Promise<string>;
+  extract: (archivePath: string, destDir: string) => Promise<string>;
+  compressTar: (sourcePaths: string[], destTarPath: string, gzip: boolean) => Promise<string>;
   listZip: (zipPath: string) => Promise<{ name: string; size: number; isDirectory: boolean }[]>;
 
   encryptFile: (filePath: string, password: string) => Promise<string>;
@@ -130,6 +134,16 @@ export interface FileAPI {
   previewDocx: (filePath: string) => Promise<DocxPreview>;
   previewXlsx: (filePath: string) => Promise<XlsxPreview>;
   previewPptx: (filePath: string) => Promise<PptxPreview>;
+
+  listFavorites: () => Promise<FavoriteEntry[]>;
+  addFavorite: (folderPath: string) => Promise<FavoriteEntry[]>;
+  removeFavorite: (folderPath: string) => Promise<FavoriteEntry[]>;
+
+  newWindow: () => Promise<void>;
+  getDiskSpace: (targetPath: string) => Promise<DiskSpace>;
+
+  searchContent: (rootDir: string, query: string, opId: string) => Promise<ContentSearchResult[]>;
+  onSearchProgress: (callback: (p: { id: string; scanned: number; found: number }) => void) => () => void;
 }
 
 declare global {

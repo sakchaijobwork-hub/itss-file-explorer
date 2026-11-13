@@ -175,3 +175,20 @@ export interface PptxPreview {
   slideCount: number;
   slides: string[];
 }
+
+export interface FavoriteEntry {
+  name: string;
+  path: string;
+}
+
+export interface DiskSpace {
+  total: number;
+  free: number;
+  used: number;
+}
+
+export interface ContentSearchResult {
+  path: string;
+  snippet: string;
+  lineNumber: number;
+}
