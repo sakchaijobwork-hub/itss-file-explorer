@@ -13,6 +13,11 @@ const MAX_DOCX_TOTAL_IMAGE_BYTES = 4 * 1024 * 1024; // stop embedding once this 
 const PREVIEW_TIMEOUT_MS = 15000;
 
 const OLE_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+// CFB (OLE2) directory-entry names are stored as raw UTF-16LE strings, so a
+// plain substring scan reliably detects the standard MS-OFFCRYPTO stream
+// names without needing a full CFB parser.
+const ENCRYPTION_MARKERS = ["EncryptionInfo", "EncryptedPackage"].map((s) => Buffer.from(s, "utf16le"));
+const OLE_SCAN_BYTES = 4 * 1024 * 1024;
 
 class PreviewError extends Error {}
 
@@ -41,6 +46,17 @@ async function assertPreviewable(filePath: string, legacyLabel: string) {
     const header = Buffer.alloc(8);
     await fd.read(header, 0, 8, 0);
     if (header.equals(OLE_MAGIC)) {
+      // Both legacy binary Office files AND password-protected modern OOXML
+      // files (.docx/.xlsx/.pptx wrapped for encryption) share this same
+      // OLE2/CFB container signature — scan for the encryption stream names
+      // to tell the two apart and give an accurate message either way.
+      const scanSize = Math.min(stat.size, OLE_SCAN_BYTES);
+      const scanBuf = Buffer.alloc(scanSize);
+      await fd.read(scanBuf, 0, scanSize, 0);
+      const isEncrypted = ENCRYPTION_MARKERS.some((marker) => scanBuf.includes(marker));
+      if (isEncrypted) {
+        throw new PreviewError("This file is password-protected and can't be previewed in-app. Click Open to enter the password in its default application.");
+      }
       throw new PreviewError(`This is a legacy ${legacyLabel} (97-2003) file. In-app preview only supports the modern format. Click Open to view it in its default application.`);
     }
   } finally {

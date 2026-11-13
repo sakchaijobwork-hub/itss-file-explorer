@@ -128,6 +128,9 @@ export default function App() {
       } else if (mod && e.key.toLowerCase() === "a") {
         e.preventDefault();
         selectAll();
+      } else if (mod && e.key.toLowerCase() === "i" && selectedPaths.size === 1) {
+        e.preventDefault();
+        openModal("properties", [Array.from(selectedPaths)[0]]);
       } else if (mod && e.shiftKey && e.key.toLowerCase() === "n") {
         e.preventDefault();
         createNewFolder();

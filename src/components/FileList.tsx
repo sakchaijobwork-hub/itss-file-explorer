@@ -139,6 +139,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           { id: "showInFolder", label: "Show in Finder/Explorer" },
           { id: "copyPath", label: "Copy Path" },
           { id: "copyName", label: "Copy Name" },
+          { id: "properties", label: "Properties…", enabled: selectionCount === 1 },
           { type: "separator" as const, id: "sep1", label: "" },
           { id: "cut", label: "Cut" },
           { id: "copy", label: "Copy" },
@@ -150,6 +151,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             label: "Batch Rename…",
             enabled: selectionCount > 1,
           },
+          { id: "createSymlink", label: "Create Symbolic Link…", enabled: selectionCount === 1 },
           { type: "separator" as const, id: "sep3", label: "" },
           {
             id: "tags",
@@ -283,6 +285,16 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         break;
       case "batchRename":
         openModal("batchRename");
+        break;
+      case "createSymlink": {
+        if (!entry || !activeTab) break;
+        const defaultPath = `${activeTab.path}/${entry.name} - Link`;
+        const dest = await window.fileAPI.saveDialog(defaultPath);
+        if (dest) await window.fileAPI.createSymlink(entry.path, dest);
+        break;
+      }
+      case "properties":
+        if (singlePath) openModal("properties", [singlePath]);
         break;
       case "compress": {
         if (!activeTab) break;

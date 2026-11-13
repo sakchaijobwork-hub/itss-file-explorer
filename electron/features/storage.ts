@@ -67,6 +67,8 @@ async function dirSizeOnly(dirPath: string): Promise<number> {
 }
 
 export function registerStorageIpc() {
+  ipcMain.handle("fs:getFolderSize", (_e, dirPath: string) => dirSizeOnly(dirPath));
+
   ipcMain.handle("fs:getDirStats", async (_e, rootDir: string): Promise<DirStatsNode> => {
     return buildTree(rootDir, 0, 2);
   });

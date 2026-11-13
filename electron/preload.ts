@@ -98,7 +98,7 @@ const api = {
   clearRecents: () => ipcRenderer.invoke("recents:clear"),
 
   // hashing / duplicates
-  hashFile: (filePath: string): Promise<string> => ipcRenderer.invoke("fs:hashFile", filePath),
+  hashFile: (filePath: string, algo?: string): Promise<string> => ipcRenderer.invoke("fs:hashFile", filePath, algo),
   findDuplicates: (rootDir: string, opId: string): Promise<DuplicateGroup[]> =>
     ipcRenderer.invoke("fs:findDuplicates", rootDir, opId),
   verifyChecksum: (pathA: string, pathB: string) => ipcRenderer.invoke("fs:verifyChecksum", pathA, pathB),
@@ -110,6 +110,7 @@ const api = {
 
   // storage analyzer
   getDirStats: (rootDir: string): Promise<DirStatsNode> => ipcRenderer.invoke("fs:getDirStats", rootDir),
+  getFolderSize: (dirPath: string): Promise<number> => ipcRenderer.invoke("fs:getFolderSize", dirPath),
 
   // archive
   compress: (sourcePaths: string[], destZipPath: string): Promise<string> =>
@@ -134,6 +135,9 @@ const api = {
   // system
   openTerminal: (dirPath: string) => ipcRenderer.invoke("system:openTerminal", dirPath),
   openWith: (filePath: string): Promise<boolean> => ipcRenderer.invoke("system:openWith", filePath),
+  readLinkTarget: (linkPath: string): Promise<string> => ipcRenderer.invoke("fs:readLinkTarget", linkPath),
+  createSymlink: (targetPath: string, linkPath: string): Promise<void> =>
+    ipcRenderer.invoke("fs:createSymlink", targetPath, linkPath),
   getGitStatus: (dirPath: string): Promise<GitStatusResult> => ipcRenderer.invoke("system:getGitStatus", dirPath),
 
   // preview

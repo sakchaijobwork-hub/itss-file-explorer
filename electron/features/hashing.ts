@@ -40,7 +40,7 @@ async function walkFiles(root: string, out: { path: string; size: number }[], de
 }
 
 export function registerHashingIpc() {
-  ipcMain.handle("fs:hashFile", (_e, filePath: string) => hashFileStream(filePath));
+  ipcMain.handle("fs:hashFile", (_e, filePath: string, algo?: string) => hashFileStream(filePath, algo));
 
   ipcMain.handle(
     "fs:findDuplicates",

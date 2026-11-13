@@ -85,4 +85,6 @@ export function registerSystemIpc() {
   ipcMain.handle("system:openTerminal", (_e, dirPath: string) => openTerminal(dirPath));
   ipcMain.handle("system:getGitStatus", (_e, dirPath: string) => getGitStatus(dirPath));
   ipcMain.handle("system:openWith", (e, filePath: string) => openWith(e, filePath));
+  ipcMain.handle("fs:readLinkTarget", (_e, linkPath: string) => fs.readlink(linkPath));
+  ipcMain.handle("fs:createSymlink", (_e, targetPath: string, linkPath: string) => fs.symlink(targetPath, linkPath));
 }

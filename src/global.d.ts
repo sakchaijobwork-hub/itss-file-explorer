@@ -72,12 +72,13 @@ export interface FileAPI {
   addRecent: (filePath: string) => Promise<RecentEntry[]>;
   clearRecents: () => Promise<RecentEntry[]>;
 
-  hashFile: (filePath: string) => Promise<string>;
+  hashFile: (filePath: string, algo?: string) => Promise<string>;
   findDuplicates: (rootDir: string, opId: string) => Promise<DuplicateGroup[]>;
   verifyChecksum: (pathA: string, pathB: string) => Promise<{ match: boolean; hashA: string; hashB: string }>;
   onDuplicateProgress: (callback: (p: { id: string; processed: number; total: number }) => void) => () => void;
 
   getDirStats: (rootDir: string) => Promise<DirStatsNode>;
+  getFolderSize: (dirPath: string) => Promise<number>;
 
   compress: (sourcePaths: string[], destZipPath: string) => Promise<string>;
   extract: (archivePath: string, destDir: string) => Promise<string>;
@@ -92,6 +93,8 @@ export interface FileAPI {
 
   openTerminal: (dirPath: string) => Promise<void>;
   openWith: (filePath: string) => Promise<boolean>;
+  readLinkTarget: (linkPath: string) => Promise<string>;
+  createSymlink: (targetPath: string, linkPath: string) => Promise<void>;
   getGitStatus: (dirPath: string) => Promise<GitStatusResult>;
 
   readTextPreview: (filePath: string) => Promise<TextPreviewResult>;
