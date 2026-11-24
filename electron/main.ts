@@ -486,6 +486,71 @@ interface ContextMenuItem {
   submenu?: ContextMenuItem[];
 }
 
+// Maps a context-menu item id to a generated icon under
+// electron/assets/menu-icons/ (see the lucide-react source each file
+// was rendered from). Only plain action items get an icon — checkbox
+// items (Tags/Folder Color swatches, etc.) already show a checkmark
+// for selection state and don't need one.
+const MENU_ICON_NAMES: Record<string, string> = {
+  open: "folder-open",
+  openWith: "app-window",
+  showInFolder: "folder-search",
+  print: "printer",
+  copyPath: "link",
+  copyName: "type",
+  properties: "info",
+  addToFavorites: "star",
+  cut: "scissors",
+  copy: "copy",
+  paste: "clipboard-paste",
+  rename: "pencil",
+  batchRename: "list-ordered",
+  createSymlink: "link-2",
+  tags: "tag",
+  folderColor: "palette",
+  compress: "file-archive",
+  compressTarGz: "archive",
+  extract: "package-open",
+  checksum: "hash",
+  permissions: "lock",
+  encrypt: "lock",
+  decrypt: "unlock",
+  imageTools: "image",
+  splitMerge: "combine",
+  pdfTools: "file-text",
+  exportPdf: "file-output",
+  share: "share-2",
+  notes: "sticky-note",
+  delete: "trash-2",
+  shred: "flame",
+  newFolder: "folder-plus",
+  newFile: "file-plus",
+  newFromTemplate: "file-stack",
+  manageTemplates: "settings-2",
+  openTerminal: "terminal",
+  remote: "server",
+  automation: "zap",
+  plugins: "puzzle",
+  compare: "git-compare",
+};
+
+const menuIconCache = new Map<string, Electron.NativeImage>();
+
+function getMenuIcon(id: string): Electron.NativeImage | undefined {
+  const name = MENU_ICON_NAMES[id];
+  if (!name) return undefined;
+  const cached = menuIconCache.get(name);
+  if (cached) return cached;
+  const iconPath = path.join(app.getAppPath(), "electron/assets/menu-icons", `${name}.png`);
+  // Let the native menu scale this down itself rather than pre-resizing:
+  // NativeImage.resize() uses a crude filter that merges thin icon strokes
+  // into solid blobs when shrinking from the 64px source to menu size.
+  const image = nativeImage.createFromPath(iconPath);
+  image.setTemplateImage(true);
+  menuIconCache.set(name, image);
+  return image;
+}
+
 function buildMenuTemplate(
   items: ContextMenuItem[],
   resolve: (id: string | null) => void
@@ -494,12 +559,13 @@ function buildMenuTemplate(
     item.type === "separator"
       ? { type: "separator" as const }
       : item.submenu
-        ? { label: item.label, submenu: buildMenuTemplate(item.submenu, resolve) }
+        ? { label: item.label, icon: getMenuIcon(item.id), submenu: buildMenuTemplate(item.submenu, resolve) }
         : {
             label: item.label,
             enabled: item.enabled ?? true,
             type: item.checked !== undefined ? ("checkbox" as const) : undefined,
             checked: item.checked,
+            icon: item.checked === undefined ? getMenuIcon(item.id) : undefined,
             click: () => resolve(item.id),
           }
   );
