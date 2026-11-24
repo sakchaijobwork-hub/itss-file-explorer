@@ -23,7 +23,7 @@ export function QuickLookOverlay() {
       <div className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-surface-light shadow-2xl dark:bg-[#2a2a2a]">
         <div className="flex items-center justify-between border-b border-black/5 px-4 py-2.5 dark:border-white/10">
           <span className="truncate text-sm font-medium text-gray-800 dark:text-gray-100">{entry.name}</span>
-          <button onClick={closeQuickLook} className="rounded p-1 hover:bg-black/5 dark:hover:bg-white/10">
+          <button onClick={closeQuickLook} className="rounded p-1 text-gray-600 hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/10">
             <X className="h-4 w-4" />
           </button>
         </div>

@@ -36,7 +36,7 @@ export function Modal({
           <h2 className="text-sm font-semibold text-gray-800 dark:text-gray-100">{title}</h2>
           <button
             onClick={onClose}
-            className="flex h-6 w-6 items-center justify-center rounded-md hover:bg-black/5 dark:hover:bg-white/10"
+            className="flex h-6 w-6 items-center justify-center rounded-md text-gray-600 hover:bg-black/5 dark:text-gray-300 dark:hover:bg-white/10"
           >
             <X className="h-4 w-4" />
           </button>
