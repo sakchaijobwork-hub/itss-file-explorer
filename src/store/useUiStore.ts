@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { TagColor } from "@/types";
+import type { FavoriteEntry, TagColor } from "@/types";
 
 export type ModalKind =
   | null
@@ -46,6 +46,7 @@ interface UiState {
   redoStack: UndoAction[];
 
   tagsMap: Record<string, TagColor[]>;
+  favorites: FavoriteEntry[];
 
   setCommandPaletteOpen: (open: boolean) => void;
   togglePreview: () => void;
@@ -64,6 +65,10 @@ interface UiState {
 
   loadTags: () => Promise<void>;
   toggleTag: (filePath: string, tag: TagColor) => Promise<void>;
+
+  loadFavorites: () => Promise<void>;
+  addFavorite: (folderPath: string) => Promise<void>;
+  removeFavorite: (folderPath: string) => Promise<void>;
 }
 
 export const useUiStore = create<UiState>((set, get) => ({
@@ -79,6 +84,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   redoStack: [],
 
   tagsMap: {},
+  favorites: [],
 
   setCommandPaletteOpen: (open) => set({ commandPaletteOpen: open }),
   togglePreview: () => set((s) => ({ previewOpen: !s.previewOpen })),
@@ -117,5 +123,18 @@ export const useUiStore = create<UiState>((set, get) => ({
     const tagsMap = await window.fileAPI.toggleTag(filePath, tag);
     set({ tagsMap });
     void get;
+  },
+
+  loadFavorites: async () => {
+    const favorites = await window.fileAPI.listFavorites();
+    set({ favorites });
+  },
+  addFavorite: async (folderPath) => {
+    const favorites = await window.fileAPI.addFavorite(folderPath);
+    set({ favorites });
+  },
+  removeFavorite: async (folderPath) => {
+    const favorites = await window.fileAPI.removeFavorite(folderPath);
+    set({ favorites });
   },
 }));

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Clock, HardDrive, Home, Star, Plus, X, Trash2, MonitorSmartphone, RefreshCw } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
-import type { FavoriteEntry, ParallelsVm, QuickAccessItem } from "@/types";
+import type { ParallelsVm, QuickAccessItem } from "@/types";
 import { formatBytes } from "@/utils/format";
 import { getDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
 import clsx from "clsx";
@@ -54,8 +54,11 @@ export function Sidebar() {
   const [quickAccess, setQuickAccess] = useState<QuickAccessItem[]>([]);
   const [drives, setDrives] = useState<QuickAccessItem[]>([]);
   const [home, setHome] = useState<string>("");
-  const [favorites, setFavorites] = useState<FavoriteEntry[]>([]);
   const [favDragOver, setFavDragOver] = useState(false);
+  const favorites = useUiStore((s) => s.favorites);
+  const loadFavorites = useUiStore((s) => s.loadFavorites);
+  const addFavorite = useUiStore((s) => s.addFavorite);
+  const removeFavorite = useUiStore((s) => s.removeFavorite);
   const openModal = useUiStore((s) => s.openModal);
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
 
@@ -63,16 +66,12 @@ export function Sidebar() {
     window.fileAPI.getHome().then(setHome);
     window.fileAPI.getQuickAccess().then(setQuickAccess);
     window.fileAPI.getDrives().then(setDrives);
-    window.fileAPI.listFavorites().then(setFavorites);
-  }, []);
+    loadFavorites();
+  }, [loadFavorites]);
 
   async function addCurrentFolder() {
     if (!activeTab) return;
-    setFavorites(await window.fileAPI.addFavorite(activeTab.path));
-  }
-
-  async function removeFavorite(path: string) {
-    setFavorites(await window.fileAPI.removeFavorite(path));
+    await addFavorite(activeTab.path);
   }
 
   async function handleFavoritesDrop(e: React.DragEvent) {
@@ -86,14 +85,12 @@ export function Sidebar() {
     // Finder) still arrives via dataTransfer.files as usual.
     const tracked = getDraggingPaths();
     const paths = tracked.length > 0 ? tracked : Array.from(e.dataTransfer.files).map((f) => window.fileAPI.getPathForFile(f));
-    let updated = favorites;
     for (const p of paths) {
       const info = await window.fileAPI.getInfo(p);
-      if (info?.isDirectory && !updated.some((fav) => fav.path === p)) {
-        updated = await window.fileAPI.addFavorite(p);
+      if (info?.isDirectory && !favorites.some((fav) => fav.path === p)) {
+        await addFavorite(p);
       }
     }
-    setFavorites(updated);
     clearDraggingPaths();
   }
 

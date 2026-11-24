@@ -63,6 +63,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const toggleTag = useUiStore((s) => s.toggleTag);
   const loadTags = useUiStore((s) => s.loadTags);
   const openModal = useUiStore((s) => s.openModal);
+  const addFavorite = useUiStore((s) => s.addFavorite);
   const gridIconSize = useUiStore((s) => s.gridIconSize);
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
 
@@ -151,6 +152,14 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           { id: "copyPath", label: "Copy Path" },
           { id: "copyName", label: "Copy Name" },
           { id: "properties", label: "Properties…", enabled: selectionCount === 1 },
+          {
+            id: "addToFavorites",
+            label: "Add to Favorites",
+            enabled: selectedList.some((p) => {
+              const e = entries.find((en) => en.path === p);
+              return e?.isDirectory;
+            }),
+          },
           { type: "separator" as const, id: "sep1", label: "" },
           { id: "cut", label: "Cut" },
           { id: "copy", label: "Copy" },
@@ -319,6 +328,11 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       case "properties":
         if (singlePath) openModal("properties", [singlePath]);
         break;
+      case "addToFavorites": {
+        const folders = selectedList.filter((p) => entries.find((en) => en.path === p)?.isDirectory);
+        for (const p of folders) await addFavorite(p);
+        break;
+      }
       case "compress": {
         if (!activeTab) break;
         const defaultPath = `${activeTab.path}/${entry?.name ?? "archive"}.zip`;
