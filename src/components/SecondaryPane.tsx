@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronUp, Folder, ArrowLeftRight, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronUp, ArrowLeftRight, ArrowRight } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
 import { getFileIconComponent } from "@/utils/fileIcon";
 import { splitPathSegments } from "@/utils/format";
@@ -120,11 +120,7 @@ export function SecondaryPane() {
                 selected === entry.path ? "bg-accent/20" : "hover:bg-black/5 dark:hover:bg-white/5"
               }`}
             >
-              {entry.isDirectory ? (
-                <Folder className="h-3.5 w-3.5 shrink-0 text-accent" />
-              ) : (
-                <Icon className="h-3.5 w-3.5 shrink-0 text-gray-400" />
-              )}
+              <Icon className={`h-3.5 w-3.5 shrink-0 ${entry.isDirectory ? "" : "text-gray-400"}`} />
               <span className="truncate text-gray-700 dark:text-gray-200">{entry.name}</span>
             </div>
           );

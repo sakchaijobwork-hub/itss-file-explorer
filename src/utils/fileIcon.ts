@@ -1,5 +1,4 @@
 import {
-  Folder,
   FileText,
   FileImage,
   FileAudio,
@@ -11,6 +10,7 @@ import {
   File as FileIcon,
 } from "lucide-react";
 import type { ComponentType } from "react";
+import { FolderIcon } from "@/components/icons/FolderIcon";
 
 const DOC_EXTS = ["doc", "docx", "docm", "dotx", "dotm"];
 const XLS_EXTS = ["xls", "xlsx", "xlsm", "xltx", "xltm", "csv"];
@@ -37,7 +37,7 @@ const OFFICE_COLORS: Record<string, string> = {
 };
 
 export function getFileIconComponent(extension: string, isDirectory: boolean) {
-  if (isDirectory) return Folder;
+  if (isDirectory) return FolderIcon;
   return EXT_MAP[extension] ?? FileIcon;
 }
 
