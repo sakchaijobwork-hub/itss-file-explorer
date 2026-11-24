@@ -488,6 +488,47 @@ ipcMain.handle("fs:getDiskSpace", async (_e, targetPath: string) => {
   return { total, free, used: total - free };
 });
 
+ipcMain.handle("fs:getFolderSizeQuick", async (_e, dirPath: string) => {
+  const FOLDER_SIZE_MAX_ENTRIES = 20000;
+  const FOLDER_SIZE_MAX_MS = 4000;
+  const start = Date.now();
+  let size = 0;
+  let count = 0;
+  let capped = false;
+
+  async function walk(dir: string) {
+    if (capped) return;
+    let entries: import("node:fs").Dirent[];
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (capped) return;
+      if (count > FOLDER_SIZE_MAX_ENTRIES || Date.now() - start > FOLDER_SIZE_MAX_MS) {
+        capped = true;
+        return;
+      }
+      count++;
+      if (entry.isSymbolicLink()) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(full);
+      } else {
+        try {
+          size += (await fs.stat(full)).size;
+        } catch {
+          // unreadable file, skip
+        }
+      }
+    }
+  }
+
+  await walk(dirPath);
+  return { size, capped };
+});
+
 ipcMain.handle("fs:openPath", (_e, targetPath: string) => shell.openPath(targetPath));
 ipcMain.handle("fs:showInFolder", (_e, targetPath: string) => shell.showItemInFolder(targetPath));
 ipcMain.handle("fs:trashInfo", () => ({ platform: process.platform }));

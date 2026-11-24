@@ -8,6 +8,7 @@ import { useVideoThumbnail } from "@/hooks/useVideoThumbnail";
 import { getFileIconComponent, getKindLabel } from "@/utils/fileIcon";
 import { formatBytes, formatDate } from "@/utils/format";
 import { setDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
+import { getFolderSize } from "@/utils/folderSize";
 import { TAG_HEX } from "@/utils/tagColors";
 import { RenameInput } from "./RenameInput";
 import type { FileEntry, SortKey, TagColor, ViewMode } from "@/types";
@@ -769,6 +770,22 @@ function FileItem({
   onDragEnd: () => void;
 }) {
   const Icon = getFileIconComponent(entry.extension, entry.isDirectory);
+  const [folderSize, setFolderSize] = useState<{ size: number; capped: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!entry.isDirectory || viewMode !== "details") {
+      setFolderSize(null);
+      return;
+    }
+    let cancelled = false;
+    getFolderSize(entry.path).then((result) => {
+      if (!cancelled) setFolderSize(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [entry.isDirectory, entry.path, viewMode]);
+
   const inputClass =
     "w-full rounded border border-accent bg-white px-1 text-xs text-black outline-none dark:bg-neutral-800 dark:text-white";
 
@@ -851,7 +868,13 @@ function FileItem({
         {nameNode}
         <TagDots tags={tags} />
       </div>
-      <div className="text-xs text-gray-500">{entry.isDirectory ? "—" : formatBytes(entry.size)}</div>
+      <div className="text-xs text-gray-500">
+        {entry.isDirectory
+          ? folderSize
+            ? `${folderSize.capped ? ">" : ""}${formatBytes(folderSize.size)}`
+            : "…"
+          : formatBytes(entry.size)}
+      </div>
       <div className="text-xs text-gray-500">{formatDate(entry.modifiedAt)}</div>
       <div className="text-xs text-gray-500">{entry.isDirectory ? "Folder" : entry.extension || "File"}</div>
     </div>

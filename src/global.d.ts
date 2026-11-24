@@ -156,6 +156,7 @@ export interface FileAPI {
 
   newWindow: () => Promise<void>;
   getDiskSpace: (targetPath: string) => Promise<DiskSpace>;
+  getFolderSizeQuick: (dirPath: string) => Promise<{ size: number; capped: boolean }>;
 
   searchContent: (rootDir: string, query: string, opId: string) => Promise<ContentSearchResult[]>;
   onSearchProgress: (callback: (p: { id: string; scanned: number; found: number }) => void) => () => void;

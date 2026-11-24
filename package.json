@@ -1,6 +1,6 @@
 {
   "name": "itss-file-explorer",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "description": "Cross-platform File Explorer (macOS & Windows) built with Electron + React + TypeScript",
   "author": "ITSS",
   "private": true,

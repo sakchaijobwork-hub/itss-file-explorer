@@ -227,6 +227,8 @@ const api = {
   newWindow: (): Promise<void> => ipcRenderer.invoke("system:newWindow"),
   getDiskSpace: (targetPath: string): Promise<{ total: number; free: number; used: number }> =>
     ipcRenderer.invoke("fs:getDiskSpace", targetPath),
+  getFolderSizeQuick: (dirPath: string): Promise<{ size: number; capped: boolean }> =>
+    ipcRenderer.invoke("fs:getFolderSizeQuick", dirPath),
 
   searchContent: (rootDir: string, query: string, opId: string): Promise<ContentSearchResult[]> =>
     ipcRenderer.invoke("fs:searchContent", rootDir, query, opId),

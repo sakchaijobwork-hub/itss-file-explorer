@@ -10,7 +10,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
-  defaultViewMode: "grid",
+  defaultViewMode: "details",
   defaultSortKey: "name",
   defaultSortDirection: "asc",
   showHiddenByDefault: false,
