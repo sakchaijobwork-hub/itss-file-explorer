@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Clock, HardDrive, Home, Star, Plus, X, Trash2, MonitorSmartphone, RefreshCw } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
@@ -52,7 +52,23 @@ function SidebarItem({
   );
 }
 
+const MIN_SIDEBAR_WIDTH = 180;
+const MAX_SIDEBAR_WIDTH = 480;
+const DEFAULT_SIDEBAR_WIDTH = 224; // matches the previous fixed w-56
+
+function loadSidebarWidth(): number {
+  const raw = Number(localStorage.getItem("itss-sidebar-width"));
+  return raw >= MIN_SIDEBAR_WIDTH && raw <= MAX_SIDEBAR_WIDTH ? raw : DEFAULT_SIDEBAR_WIDTH;
+}
+
 export function Sidebar() {
+  const [sidebarWidth, setSidebarWidthState] = useState(loadSidebarWidth);
+  const sidebarWidthRef = useRef(sidebarWidth);
+  const resizing = useRef(false);
+  function setSidebarWidth(w: number) {
+    sidebarWidthRef.current = w;
+    setSidebarWidthState(w);
+  }
   const [quickAccess, setQuickAccess] = useState<QuickAccessItem[]>([]);
   const [drives, setDrives] = useState<QuickAccessItem[]>([]);
   const [home, setHome] = useState<string>("");
@@ -110,8 +126,38 @@ export function Sidebar() {
     reorderFavorites(order);
   }
 
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    resizing.current = true;
+    const startX = e.clientX;
+    const startWidth = sidebarWidthRef.current;
+    const prevCursor = document.body.style.cursor;
+    const prevUserSelect = document.body.style.userSelect;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    function onMouseMove(ev: MouseEvent) {
+      const next = Math.min(MAX_SIDEBAR_WIDTH, Math.max(MIN_SIDEBAR_WIDTH, startWidth + (ev.clientX - startX)));
+      setSidebarWidth(next);
+    }
+    function onMouseUp() {
+      resizing.current = false;
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      document.body.style.cursor = prevCursor;
+      document.body.style.userSelect = prevUserSelect;
+      localStorage.setItem("itss-sidebar-width", String(sidebarWidthRef.current));
+    }
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <aside className="flex w-56 shrink-0 flex-col gap-4 overflow-y-auto border-r border-black/5 bg-panel-light px-2 py-3 dark:border-white/5 dark:bg-panel-dark">
+    <>
+    <aside
+      style={{ width: sidebarWidth }}
+      className="flex shrink-0 flex-col gap-4 overflow-y-auto bg-panel-light px-2 py-3 dark:bg-panel-dark">
       <div>
         <div className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
           Favorites
@@ -218,6 +264,14 @@ export function Sidebar() {
 
       <DiskSpaceIndicator path={activeTab?.path} />
     </aside>
+    <div
+      onMouseDown={startResize}
+      className="group relative w-1 shrink-0 cursor-col-resize"
+      title="Drag to resize"
+    >
+      <div className="absolute inset-y-0 left-0 w-px bg-black/5 group-hover:bg-accent/60 dark:bg-white/5" />
+    </div>
+    </>
   );
 }
 
