@@ -493,6 +493,7 @@ interface ContextMenuItem {
 // for selection state and don't need one.
 const MENU_ICON_NAMES: Record<string, string> = {
   open: "folder-open",
+  openInNewTab: "square-plus",
   openWith: "app-window",
   showInFolder: "folder-search",
   print: "printer",

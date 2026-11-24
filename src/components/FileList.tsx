@@ -48,6 +48,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const startRename = useFileStore((s) => s.startRename);
   const endRename = useFileStore((s) => s.endRename);
   const navigateTo = useFileStore((s) => s.navigateTo);
+  const openTab = useFileStore((s) => s.openTab);
   const setClipboard = useFileStore((s) => s.setClipboard);
   const clipboard = useFileStore((s) => s.clipboard);
   const tagsMap = useUiStore((s) => s.tagsMap);
@@ -137,6 +138,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     const items = entry
       ? [
           { id: "open", label: "Open" },
+          { id: "openInNewTab", label: "Open in New Tab", enabled: entry.isDirectory },
           { id: "openWith", label: "Open With…", enabled: !entry.isDirectory },
           { id: "showInFolder", label: "Show in Finder/Explorer" },
           { id: "print", label: "Print…", enabled: selectionCount === 1 && PRINTABLE_EXTS.has(entry.extension) },
@@ -297,6 +299,9 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     switch (action) {
       case "open":
         if (entry) handleOpen(entry);
+        break;
+      case "openInNewTab":
+        if (entry) openTab(entry.path);
         break;
       case "showInFolder":
         if (entry) window.fileAPI.showInFolder(entry.path);
