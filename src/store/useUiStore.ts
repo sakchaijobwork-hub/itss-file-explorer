@@ -69,6 +69,7 @@ interface UiState {
   loadFavorites: () => Promise<void>;
   addFavorite: (folderPath: string) => Promise<void>;
   removeFavorite: (folderPath: string) => Promise<void>;
+  reorderFavorites: (orderedPaths: string[]) => Promise<void>;
 }
 
 export const useUiStore = create<UiState>((set, get) => ({
@@ -135,6 +136,15 @@ export const useUiStore = create<UiState>((set, get) => ({
   },
   removeFavorite: async (folderPath) => {
     const favorites = await window.fileAPI.removeFavorite(folderPath);
+    set({ favorites });
+  },
+  reorderFavorites: async (orderedPaths) => {
+    // Apply the new order immediately so dragging feels instant; the
+    // IPC result (same order, re-read from disk) then confirms it.
+    const byPath = new Map(get().favorites.map((f) => [f.path, f]));
+    const optimistic = orderedPaths.map((p) => byPath.get(p)).filter((f): f is FavoriteEntry => !!f);
+    set({ favorites: optimistic });
+    const favorites = await window.fileAPI.reorderFavorites(orderedPaths);
     set({ favorites });
   },
 }));

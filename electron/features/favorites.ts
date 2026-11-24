@@ -46,4 +46,18 @@ export function registerFavoritesIpc() {
     await saveStore();
     return cache;
   });
+
+  ipcMain.handle("favorites:reorder", async (_e, orderedPaths: string[]) => {
+    const store = await loadStore();
+    const byPath = new Map(store.map((f) => [f.path, f]));
+    const reordered = orderedPaths.map((p) => byPath.get(p)).filter((f): f is FavoriteEntry => !!f);
+    // Keep any favorite the caller didn't mention (defensive — shouldn't
+    // normally happen) so a stale/partial list can never silently drop one.
+    for (const f of store) {
+      if (!orderedPaths.includes(f.path)) reordered.push(f);
+    }
+    cache = reordered;
+    await saveStore();
+    return cache;
+  });
 }

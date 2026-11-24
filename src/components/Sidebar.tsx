@@ -55,10 +55,13 @@ export function Sidebar() {
   const [drives, setDrives] = useState<QuickAccessItem[]>([]);
   const [home, setHome] = useState<string>("");
   const [favDragOver, setFavDragOver] = useState(false);
+  const [draggingFavPath, setDraggingFavPath] = useState<string | null>(null);
+  const [dragOverFavPath, setDragOverFavPath] = useState<string | null>(null);
   const favorites = useUiStore((s) => s.favorites);
   const loadFavorites = useUiStore((s) => s.loadFavorites);
   const addFavorite = useUiStore((s) => s.addFavorite);
   const removeFavorite = useUiStore((s) => s.removeFavorite);
+  const reorderFavorites = useUiStore((s) => s.reorderFavorites);
   const openModal = useUiStore((s) => s.openModal);
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
 
@@ -92,6 +95,17 @@ export function Sidebar() {
       }
     }
     clearDraggingPaths();
+  }
+
+  function reorderFavoriteTo(targetPath: string) {
+    if (!draggingFavPath || draggingFavPath === targetPath) return;
+    const order = favorites.map((f) => f.path);
+    const fromIdx = order.indexOf(draggingFavPath);
+    const toIdx = order.indexOf(targetPath);
+    if (fromIdx === -1 || toIdx === -1) return;
+    order.splice(fromIdx, 1);
+    order.splice(toIdx, 0, draggingFavPath);
+    reorderFavorites(order);
   }
 
   return (
@@ -148,7 +162,41 @@ export function Sidebar() {
             </div>
           )}
           {favorites.map((fav) => (
-            <SidebarItem key={fav.path} label={fav.name} path={fav.path} icon={Star} onRemove={() => removeFavorite(fav.path)} />
+            <div
+              key={fav.path}
+              draggable
+              onDragStart={(e) => {
+                e.stopPropagation();
+                e.dataTransfer.effectAllowed = "move";
+                setDraggingFavPath(fav.path);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (draggingFavPath) setDragOverFavPath(fav.path);
+              }}
+              onDragLeave={() => setDragOverFavPath((p) => (p === fav.path ? null : p))}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                reorderFavoriteTo(fav.path);
+                setDraggingFavPath(null);
+                setDragOverFavPath(null);
+              }}
+              onDragEnd={() => {
+                setDraggingFavPath(null);
+                setDragOverFavPath(null);
+              }}
+              className={clsx(
+                "rounded-md border-t-2",
+                dragOverFavPath === fav.path && draggingFavPath && draggingFavPath !== fav.path
+                  ? "border-accent"
+                  : "border-transparent",
+                draggingFavPath === fav.path && "opacity-40"
+              )}
+            >
+              <SidebarItem label={fav.name} path={fav.path} icon={Star} onRemove={() => removeFavorite(fav.path)} />
+            </div>
           ))}
         </div>
       </div>

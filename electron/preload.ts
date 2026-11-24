@@ -214,6 +214,7 @@ const api = {
   listFavorites: (): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:list"),
   addFavorite: (folderPath: string): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:add", folderPath),
   removeFavorite: (folderPath: string): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:remove", folderPath),
+  reorderFavorites: (orderedPaths: string[]): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:reorder", orderedPaths),
 
   newWindow: (): Promise<void> => ipcRenderer.invoke("system:newWindow"),
   getDiskSpace: (targetPath: string): Promise<{ total: number; free: number; used: number }> =>

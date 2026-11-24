@@ -147,6 +147,7 @@ export interface FileAPI {
   listFavorites: () => Promise<FavoriteEntry[]>;
   addFavorite: (folderPath: string) => Promise<FavoriteEntry[]>;
   removeFavorite: (folderPath: string) => Promise<FavoriteEntry[]>;
+  reorderFavorites: (orderedPaths: string[]) => Promise<FavoriteEntry[]>;
 
   newWindow: () => Promise<void>;
   getDiskSpace: (targetPath: string) => Promise<DiskSpace>;
