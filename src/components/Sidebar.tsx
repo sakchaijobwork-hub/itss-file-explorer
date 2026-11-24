@@ -11,11 +11,13 @@ function SidebarItem({
   label,
   path,
   icon: Icon,
+  iconFill,
   onRemove,
 }: {
   label: string;
   path: string;
   icon: typeof Home;
+  iconFill?: string;
   onRemove?: () => void;
 }) {
   const navigateTo = useFileStore((s) => s.navigateTo);
@@ -32,7 +34,7 @@ function SidebarItem({
       )}
     >
       <button onClick={() => navigateTo(path)} title={path} className="flex min-w-0 flex-1 items-center gap-2 text-left">
-        <Icon className="h-4 w-4 shrink-0" />
+        <Icon className="h-4 w-4 shrink-0" fill={iconFill} />
         <span className="truncate">{label}</span>
       </button>
       {onRemove && (
@@ -195,7 +197,7 @@ export function Sidebar() {
                 draggingFavPath === fav.path && "opacity-40"
               )}
             >
-              <SidebarItem label={fav.name} path={fav.path} icon={Star} onRemove={() => removeFavorite(fav.path)} />
+              <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#eab308" onRemove={() => removeFavorite(fav.path)} />
             </div>
           ))}
         </div>
