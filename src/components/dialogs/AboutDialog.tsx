@@ -1,16 +1,22 @@
+import { useEffect, useState } from "react";
 import { Modal } from "@/components/Modal";
 import { useUiStore } from "@/store/useUiStore";
-import { FolderOpen } from "lucide-react";
+import { FolderIcon } from "@/components/icons/FolderIcon";
 
 export function AboutDialog() {
   const closeModal = useUiStore((s) => s.closeModal);
+  const [version, setVersion] = useState("");
+
+  useEffect(() => {
+    window.fileAPI.getCurrentVersion().then(setVersion);
+  }, []);
 
   return (
     <Modal title="About" onClose={closeModal} width="340px">
       <div className="flex flex-col items-center gap-2 py-4 text-center">
-        <FolderOpen className="h-14 w-14 text-accent" />
+        <FolderIcon className="h-14 w-14" />
         <div className="text-base font-semibold text-gray-800 dark:text-gray-100">ITSS File Explorer</div>
-        <div className="text-xs text-gray-400">Version 0.1.0</div>
+        <div className="text-xs text-gray-400">Version {version || "…"}</div>
         <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
           A cross-platform file manager for macOS and Windows, built with Electron, React and TypeScript.
         </p>
