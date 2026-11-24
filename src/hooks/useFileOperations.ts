@@ -40,8 +40,19 @@ export function useFileOperations() {
   }, [selectedPaths, setClipboard]);
 
   const paste = useCallback(async () => {
-    if (clipboard.paths.length === 0) return;
     const opId = `op-${++opCounter}`;
+    if (clipboard.paths.length === 0) {
+      const osPaths = await window.fileAPI.readClipboardFiles();
+      if (osPaths.length === 0) return;
+      await window.fileAPI.copy(osPaths, currentPath, opId);
+      pushUndoAction({
+        type: "copy",
+        sourcePaths: osPaths,
+        createdPaths: osPaths.map((p) => joinPath(currentPath, basename(p))),
+        destDir: currentPath,
+      });
+      return;
+    }
     if (clipboard.mode === "copy") {
       await window.fileAPI.copy(clipboard.paths, currentPath, opId);
       pushUndoAction({

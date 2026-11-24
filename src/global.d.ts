@@ -51,6 +51,7 @@ export interface FileAPI {
   deletePermanent: (paths: string[]) => Promise<void>;
   copy: (sourcePaths: string[], destDir: string, opId: string) => Promise<void>;
   move: (sourcePaths: string[], destDir: string, opId: string) => Promise<void>;
+  readClipboardFiles: () => Promise<string[]>;
   openPath: (targetPath: string) => Promise<string>;
   startDrag: (filePaths: string[]) => void;
   getPathForFile: (file: File) => string;

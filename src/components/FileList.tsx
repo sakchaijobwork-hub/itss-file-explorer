@@ -134,6 +134,8 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           : [];
 
     const templates = entry ? [] : await window.fileAPI.listTemplates();
+    const canPaste =
+      clipboard.paths.length > 0 || (await window.fileAPI.readClipboardFiles()).length > 0;
 
     const items = entry
       ? [
@@ -156,7 +158,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           { type: "separator" as const, id: "sep1", label: "" },
           { id: "cut", label: "Cut" },
           { id: "copy", label: "Copy" },
-          { id: "paste", label: "Paste", enabled: clipboard.paths.length > 0 },
+          { id: "paste", label: "Paste", enabled: canPaste },
           { type: "separator" as const, id: "sep2", label: "" },
           { id: "rename", label: "Rename", enabled: selectionCount === 1 },
           {
@@ -253,7 +255,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
               { id: "manageTemplates", label: "Manage Templates…" },
             ],
           },
-          { id: "paste", label: "Paste", enabled: clipboard.paths.length > 0 },
+          { id: "paste", label: "Paste", enabled: canPaste },
           { type: "separator" as const, id: "sep1", label: "" },
           {
             id: "sortBy",

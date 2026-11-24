@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, shell, Menu, dialog, nativeImage } from "electron";
+import { app, BrowserWindow, ipcMain, shell, Menu, dialog, nativeImage, clipboard } from "electron";
 import type { MenuItemConstructorOptions } from "electron";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
@@ -449,6 +449,33 @@ ipcMain.on("fs:startDrag", (e, filePaths: string[]) => {
   if (filePaths.length === 0) return;
   const icon = nativeImage.createFromPath(dragIconPath);
   e.sender.startDrag({ file: filePaths[0], files: filePaths, icon });
+});
+
+ipcMain.handle("fs:readClipboardFiles", () => {
+  if (process.platform === "darwin") {
+    try {
+      const plist = clipboard.readBuffer("NSFilenamesPboardType").toString("utf8");
+      const paths = [...plist.matchAll(/<string>(.*?)<\/string>/g)].map((m) => m[1]);
+      if (paths.length > 0) return paths;
+    } catch {
+      // fall through to uri-list
+    }
+  }
+  const uriList = clipboard.read("text/uri-list");
+  if (uriList) {
+    return uriList
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("file://"))
+      .map((line) => {
+        try {
+          return decodeURIComponent(new URL(line).pathname);
+        } catch {
+          return "";
+        }
+      })
+      .filter(Boolean);
+  }
+  return [];
 });
 
 ipcMain.handle("system:newWindow", () => createWindow());
