@@ -54,6 +54,7 @@ export function Sidebar() {
   const [drives, setDrives] = useState<QuickAccessItem[]>([]);
   const [home, setHome] = useState<string>("");
   const [favorites, setFavorites] = useState<FavoriteEntry[]>([]);
+  const [favDragOver, setFavDragOver] = useState(false);
   const openModal = useUiStore((s) => s.openModal);
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
 
@@ -71,6 +72,20 @@ export function Sidebar() {
 
   async function removeFavorite(path: string) {
     setFavorites(await window.fileAPI.removeFavorite(path));
+  }
+
+  async function handleFavoritesDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setFavDragOver(false);
+    const paths = Array.from(e.dataTransfer.files).map((f) => window.fileAPI.getPathForFile(f));
+    let updated = favorites;
+    for (const p of paths) {
+      const info = await window.fileAPI.getInfo(p);
+      if (info?.isDirectory && !updated.some((fav) => fav.path === p)) {
+        updated = await window.fileAPI.addFavorite(p);
+      }
+    }
+    setFavorites(updated);
   }
 
   return (
@@ -101,7 +116,17 @@ export function Sidebar() {
         </div>
       </div>
 
-      <div>
+      <div
+        onDragOver={(e) => {
+          if (e.dataTransfer.types.includes("Files")) {
+            e.preventDefault();
+            setFavDragOver(true);
+          }
+        }}
+        onDragLeave={() => setFavDragOver(false)}
+        onDrop={handleFavoritesDrop}
+        className={clsx("rounded-md transition-colors", favDragOver && "bg-accent/10 ring-1 ring-accent/40")}
+      >
         <div className="flex items-center justify-between px-2 pb-1">
           <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">My Favorites</span>
           <button onClick={addCurrentFolder} title="Add current folder" className="rounded p-0.5 text-gray-400 hover:bg-black/5 dark:hover:bg-white/10">
@@ -110,7 +135,9 @@ export function Sidebar() {
         </div>
         <div className="flex flex-col gap-0.5">
           {favorites.length === 0 && (
-            <div className="px-2 py-1 text-[11px] text-gray-400">Click + to pin a folder</div>
+            <div className="px-2 py-1 text-[11px] text-gray-400">
+              {favDragOver ? "Drop to pin this folder" : "Click + or drag a folder here"}
+            </div>
           )}
           {favorites.map((fav) => (
             <SidebarItem key={fav.path} label={fav.name} path={fav.path} icon={Star} onRemove={() => removeFavorite(fav.path)} />
