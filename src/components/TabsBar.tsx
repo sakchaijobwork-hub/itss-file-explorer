@@ -14,6 +14,20 @@ const TAG_HEX: Record<TagColor, string> = {
   gray: "#9ca3af",
 };
 
+// Native OS menus can't render arbitrary colored icons for plain-text
+// MenuItems without a lot of extra plumbing, but colored circle emoji
+// render natively in full color in both the macOS and Windows menu
+// fonts, giving a quick color-swatch preview with no extra work.
+const TAG_SWATCH: Record<TagColor, string> = {
+  red: "🔴",
+  orange: "🟠",
+  yellow: "🟡",
+  green: "🟢",
+  blue: "🔵",
+  purple: "🟣",
+  gray: "⚪",
+};
+
 export function TabsBar() {
   const tabs = useFileStore((s) => s.tabs);
   const activeTabId = useFileStore((s) => s.activeTabId);
@@ -30,7 +44,7 @@ export function TabsBar() {
       { id: "color:none", label: "None", checked: !current },
       ...TAG_COLORS.map((c) => ({
         id: `color:${c}`,
-        label: c[0].toUpperCase() + c.slice(1),
+        label: `${TAG_SWATCH[c]}  ${c[0].toUpperCase() + c.slice(1)}`,
         checked: current === c,
       })),
     ]);
