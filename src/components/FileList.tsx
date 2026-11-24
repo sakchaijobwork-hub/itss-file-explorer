@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
-import { ChevronUp, ChevronDown, Play } from "lucide-react";
+import { ChevronUp, ChevronDown, Play, Star } from "lucide-react";
 import { useFileStore, sortEntries } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
@@ -628,6 +628,30 @@ function TagDots({ tags }: { tags: TagColor[] }) {
   );
 }
 
+function FavoriteStar({ path }: { path: string }) {
+  const favorites = useUiStore((s) => s.favorites);
+  const addFavorite = useUiStore((s) => s.addFavorite);
+  const removeFavorite = useUiStore((s) => s.removeFavorite);
+  const isFavorite = favorites.some((f) => f.path === path);
+
+  return (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        if (isFavorite) removeFavorite(path);
+        else addFavorite(path);
+      }}
+      title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
+      className={clsx(
+        "shrink-0 rounded p-0.5 hover:bg-black/10 dark:hover:bg-white/10",
+        !isFavorite && "opacity-0 group-hover:opacity-100"
+      )}
+    >
+      <Star className="h-3.5 w-3.5" fill={isFavorite ? "#eab308" : "none"} stroke={isFavorite ? "#eab308" : "currentColor"} />
+    </button>
+  );
+}
+
 function FileItem({
   entry,
   viewMode,
@@ -713,6 +737,7 @@ function FileItem({
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
+        {entry.isDirectory && <FavoriteStar path={entry.path} />}
         <Thumbnail entry={entry} size={16} IconFallback={Icon} className="shrink-0" />
         {nameNode}
         <TagDots tags={tags} />
@@ -735,6 +760,7 @@ function FileItem({
       onDragEnd={onDragEnd}
     >
       <div className="flex items-center gap-2 overflow-hidden">
+        {entry.isDirectory && <FavoriteStar path={entry.path} />}
         <Thumbnail entry={entry} size={16} IconFallback={Icon} className="shrink-0" />
         {nameNode}
         <TagDots tags={tags} />
