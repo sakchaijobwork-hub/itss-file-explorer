@@ -63,6 +63,7 @@ export interface FileAPI {
   onProgress: (callback: (progress: OperationProgress) => void) => () => void;
   showContextMenu: (items: ContextMenuItem[]) => Promise<string | null>;
   confirmDelete: (names: string[]) => Promise<boolean>;
+  confirm: (message: string, confirmLabel: string) => Promise<boolean>;
   saveDialog: (defaultPath: string, filters?: { name: string; extensions: string[] }[]) => Promise<string | null>;
   openDirectoryDialog: (defaultPath?: string) => Promise<string | null>;
 

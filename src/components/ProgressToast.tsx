@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { OperationProgress } from "@/types";
+import { ProgressBar } from "@/components/ProgressBar";
 
 export function ProgressToast() {
   const [ops, setOps] = useState<Record<string, OperationProgress>>({});
@@ -41,12 +42,7 @@ export function ProgressToast() {
               </span>
             </div>
             <div className="mb-1 truncate text-gray-300">{op.currentFile}</div>
-            <div className="h-1 overflow-hidden rounded-full bg-white/20">
-              <div
-                className="h-full bg-accent transition-all"
-                style={{ width: `${op.total ? (op.current / op.total) * 100 : 0}%` }}
-              />
-            </div>
+            <ProgressBar percent={op.total ? (op.current / op.total) * 100 : 0} className="h-1.5" />
           </motion.div>
         ))}
       </AnimatePresence>

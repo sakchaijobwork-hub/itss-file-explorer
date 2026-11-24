@@ -641,6 +641,18 @@ ipcMain.handle("ui:openDirectoryDialog", async (e, defaultPath?: string) => {
   return result.canceled ? null : result.filePaths[0];
 });
 
+ipcMain.handle("ui:confirm", async (e, message: string, confirmLabel: string) => {
+  const win = BrowserWindow.fromWebContents(e.sender) ?? undefined;
+  const result = await dialog.showMessageBox(win as BrowserWindow, {
+    type: "warning",
+    buttons: ["Cancel", confirmLabel],
+    defaultId: 1,
+    cancelId: 0,
+    message,
+  });
+  return result.response === 1;
+});
+
 ipcMain.handle("ui:confirmDelete", async (e, names: string[]) => {
   const win = BrowserWindow.fromWebContents(e.sender) ?? undefined;
   const message =

@@ -5,6 +5,7 @@ import { useUiStore } from "@/store/useUiStore";
 import type { ParallelsVm, QuickAccessItem } from "@/types";
 import { formatBytes } from "@/utils/format";
 import { getDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
+import { ProgressBar } from "@/components/ProgressBar";
 import clsx from "clsx";
 
 function SidebarItem({
@@ -39,9 +40,10 @@ function SidebarItem({
       </button>
       {onRemove && (
         <button
-          onClick={(e) => {
+          onClick={async (e) => {
             e.stopPropagation();
-            onRemove();
+            const confirmed = await window.fileAPI.confirm(`Remove "${label}" from favorites?`, "Remove");
+            if (confirmed) onRemove();
           }}
           className="shrink-0 rounded p-0.5 opacity-0 hover:bg-black/10 group-hover:opacity-100 dark:hover:bg-white/10"
         >
@@ -390,9 +392,7 @@ function DiskSpaceIndicator({ path }: { path?: string }) {
 
   return (
     <div className="mt-auto px-2 pb-1 text-[11px] text-gray-400">
-      <div className="mb-1 h-1.5 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-        <div className="h-full bg-accent" style={{ width: `${usedPct}%` }} />
-      </div>
+      <ProgressBar percent={usedPct} className="mb-1.5 h-2" />
       {formatBytes(space.free)} free of {formatBytes(space.total)}
     </div>
   );

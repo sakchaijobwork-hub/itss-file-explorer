@@ -131,9 +131,14 @@ export function ArchiveFileIcon(props: BadgeProps) {
 
 export function GenericFileIcon(props: BadgeProps) {
   return (
-    <SquircleBadge from="#9aa4b4" to="#6b7585" {...props}>
-      <path d="M8 5.5h5l3 3V18a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z" fill="#fff" opacity="0.95" />
-      <path d="M13 5.5v3h3Z" fill="#dde3eb" />
-    </SquircleBadge>
+    <svg viewBox="0 0 24 24" className={props.className} style={props.style} xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M5 2.5h8.5l5 5V21a0.5 0.5 0 0 1-0.5 0.5H5a0.5 0.5 0 0 1-0.5-0.5V3a0.5 0.5 0 0 1 0.5-0.5z"
+        fill="#eef1f5"
+        stroke="#c3cad3"
+        strokeWidth="0.8"
+      />
+      <path d="M13.5 2.5V7a0.5 0.5 0 0 0 0.5 0.5h4.5" fill="none" stroke="#c3cad3" strokeWidth="0.8" />
+    </svg>
   );
 }

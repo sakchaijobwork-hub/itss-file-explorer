@@ -84,6 +84,8 @@ const api = {
   showContextMenu: (items: ContextMenuItem[]): Promise<string | null> =>
     ipcRenderer.invoke("ui:contextMenu", items),
   confirmDelete: (names: string[]): Promise<boolean> => ipcRenderer.invoke("ui:confirmDelete", names),
+  confirm: (message: string, confirmLabel: string): Promise<boolean> =>
+    ipcRenderer.invoke("ui:confirm", message, confirmLabel),
   saveDialog: (defaultPath: string, filters?: { name: string; extensions: string[] }[]): Promise<string | null> =>
     ipcRenderer.invoke("ui:saveDialog", defaultPath, filters),
   openDirectoryDialog: (defaultPath?: string): Promise<string | null> =>
