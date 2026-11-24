@@ -26,6 +26,7 @@ import type {
   TrashItem,
   ParallelsVm,
   UpdateStatus,
+  OpenWithAppsResult,
 } from "./types";
 
 export interface ContextMenuItem {
@@ -94,6 +95,8 @@ export interface FileAPI {
 
   openTerminal: (dirPath: string) => Promise<void>;
   openWith: (filePath: string) => Promise<boolean>;
+  listOpenWithApps: (filePath: string) => Promise<OpenWithAppsResult>;
+  openWithApp: (filePath: string, appPath: string) => Promise<void>;
   readLinkTarget: (linkPath: string) => Promise<string>;
   createSymlink: (targetPath: string, linkPath: string) => Promise<void>;
   getGitStatus: (dirPath: string) => Promise<GitStatusResult>;

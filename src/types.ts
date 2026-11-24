@@ -218,3 +218,13 @@ export interface TrashItem {
   originalPath: string | null;
   isDirectory: boolean;
 }
+
+export interface OpenWithApp {
+  path: string;
+  name: string;
+}
+
+export interface OpenWithAppsResult {
+  apps: OpenWithApp[];
+  parallelsApps: OpenWithApp[];
+}

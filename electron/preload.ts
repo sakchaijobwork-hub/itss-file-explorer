@@ -24,6 +24,7 @@ import type {
 import type { TagColor } from "./features/tags";
 import type { FavoriteEntry } from "./features/favorites";
 import type { UpdateStatus } from "./features/updater";
+import type { OpenWithAppsResult } from "./features/system";
 
 export interface QuickAccessItem {
   name: string;
@@ -136,6 +137,10 @@ const api = {
   // system
   openTerminal: (dirPath: string) => ipcRenderer.invoke("system:openTerminal", dirPath),
   openWith: (filePath: string): Promise<boolean> => ipcRenderer.invoke("system:openWith", filePath),
+  listOpenWithApps: (filePath: string): Promise<OpenWithAppsResult> =>
+    ipcRenderer.invoke("system:listOpenWithApps", filePath),
+  openWithApp: (filePath: string, appPath: string): Promise<void> =>
+    ipcRenderer.invoke("system:openWithApp", filePath, appPath),
   readLinkTarget: (linkPath: string): Promise<string> => ipcRenderer.invoke("fs:readLinkTarget", linkPath),
   createSymlink: (targetPath: string, linkPath: string): Promise<void> =>
     ipcRenderer.invoke("fs:createSymlink", targetPath, linkPath),

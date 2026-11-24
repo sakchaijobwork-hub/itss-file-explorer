@@ -137,12 +137,39 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     const templates = entry ? [] : await window.fileAPI.listTemplates();
     const canPaste =
       clipboard.paths.length > 0 || (await window.fileAPI.readClipboardFiles()).length > 0;
+    const openWithResult =
+      entry && !entry.isDirectory ? await window.fileAPI.listOpenWithApps(entry.path) : { apps: [], parallelsApps: [] };
 
     const items = entry
       ? [
           { id: "open", label: "Open" },
           { id: "openInNewTab", label: "Open in New Tab", enabled: entry.isDirectory },
-          { id: "openWith", label: "Open With…", enabled: !entry.isDirectory },
+          entry.isDirectory
+            ? { id: "openWith", label: "Open With…", enabled: false }
+            : {
+                id: "openWith",
+                label: "Open With",
+                submenu: [
+                  ...openWithResult.apps.map((a) => ({ id: `openWith:${a.path}`, label: a.name })),
+                  ...(openWithResult.apps.length > 0
+                    ? [{ type: "separator" as const, id: "openWith-sep1", label: "" }]
+                    : []),
+                  ...(openWithResult.parallelsApps.length > 0
+                    ? [
+                        {
+                          id: "openWithParallels",
+                          label: "Windows Apps (Parallels)",
+                          submenu: openWithResult.parallelsApps.map((a) => ({
+                            id: `openWith:${a.path}`,
+                            label: a.name,
+                          })),
+                        },
+                        { type: "separator" as const, id: "openWith-sep2", label: "" },
+                      ]
+                    : []),
+                  { id: "openWith:other", label: "Other…" },
+                ],
+              },
           { id: "showInFolder", label: "Show in Finder/Explorer" },
           { id: "print", label: "Print…", enabled: selectionCount === 1 && PRINTABLE_EXTS.has(entry.extension) },
           { id: "copyPath", label: "Copy Path" },
@@ -323,6 +350,14 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       return;
     }
 
+    if (action.startsWith("openWith:")) {
+      if (!entry) return;
+      const appPath = action.slice("openWith:".length);
+      if (appPath === "other") window.fileAPI.openWith(entry.path);
+      else window.fileAPI.openWithApp(entry.path, appPath);
+      return;
+    }
+
     switch (action) {
       case "open":
         if (entry) handleOpen(entry);
@@ -332,9 +367,6 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         break;
       case "showInFolder":
         if (entry) window.fileAPI.showInFolder(entry.path);
-        break;
-      case "openWith":
-        if (entry) window.fileAPI.openWith(entry.path);
         break;
       case "print":
         if (entry) {

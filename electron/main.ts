@@ -11,7 +11,7 @@ import { registerHashingIpc } from "./features/hashing";
 import { registerStorageIpc } from "./features/storage";
 import { registerArchiveIpc } from "./features/archive";
 import { registerSecurityIpc } from "./features/security";
-import { registerSystemIpc } from "./features/system";
+import { registerSystemIpc, getCachedOpenWithAppIcon } from "./features/system";
 import { registerPreviewIpc } from "./features/preview";
 import { registerRemoteIpc } from "./features/remote";
 import { registerImagesIpc } from "./features/images";
@@ -582,6 +582,9 @@ const MENU_ICON_NAMES: Record<string, string> = {
 const menuIconCache = new Map<string, Electron.NativeImage>();
 
 function getMenuIcon(id: string): Electron.NativeImage | undefined {
+  if (id.startsWith("openWith:")) {
+    return getCachedOpenWithAppIcon(id.slice("openWith:".length));
+  }
   const name = MENU_ICON_NAMES[id];
   if (!name) return undefined;
   const cached = menuIconCache.get(name);
