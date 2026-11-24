@@ -45,7 +45,7 @@ function SidebarItem({
           }}
           className="shrink-0 rounded p-0.5 opacity-0 hover:bg-black/10 group-hover:opacity-100 dark:hover:bg-white/10"
         >
-          <X className="h-3 w-3" />
+          <X className="h-3 w-3 hover:text-red-500" />
         </button>
       )}
     </div>
