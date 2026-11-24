@@ -62,6 +62,7 @@
   "build": {
     "appId": "th.co.itss.fileexplorer",
     "productName": "ITSS File Explorer",
+    "artifactName": "ITSS-File-Explorer-${version}-${arch}.${ext}",
     "directories": {
       "output": "release"
     },
