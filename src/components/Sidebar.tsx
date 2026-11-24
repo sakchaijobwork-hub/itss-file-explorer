@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Clock, HardDrive, Home, Star, Plus, X, Trash2, MonitorSmartphone, RefreshCw } from "lucide-react";
+import { Clock, HardDrive, Home, Star, Plus, X, Trash2, MonitorSmartphone, RefreshCw, Bookmark } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
 import type { ParallelsVm, QuickAccessItem } from "@/types";
@@ -159,7 +159,8 @@ export function Sidebar() {
       style={{ width: sidebarWidth }}
       className="flex shrink-0 flex-col gap-4 overflow-y-auto bg-panel-light px-2 py-3 dark:bg-panel-dark">
       <div>
-        <div className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+        <div className="flex items-center gap-1.5 px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+          <Star className="h-3 w-3 shrink-0" />
           Favorites
         </div>
         <div className="flex flex-col gap-0.5">
@@ -198,7 +199,10 @@ export function Sidebar() {
         className={clsx("rounded-md transition-colors", favDragOver && "bg-accent/10 ring-1 ring-accent/40")}
       >
         <div className="flex items-center justify-between px-2 pb-1">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">My Favorites</span>
+          <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+            <Bookmark className="h-3 w-3 shrink-0" />
+            My Favorites
+          </span>
           <button onClick={addCurrentFolder} title="Add current folder" className="rounded p-0.5 text-gray-400 hover:bg-black/5 dark:hover:bg-white/10">
             <Plus className="h-3.5 w-3.5" />
           </button>
@@ -250,7 +254,8 @@ export function Sidebar() {
       </div>
 
       <div>
-        <div className="px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+        <div className="flex items-center gap-1.5 px-2 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+          <HardDrive className="h-3 w-3 shrink-0" />
           Locations
         </div>
         <div className="flex flex-col gap-0.5">
@@ -311,7 +316,10 @@ function ParallelsVmsSection() {
   return (
     <div>
       <div className="flex items-center justify-between px-2 pb-1">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Parallels VMs</span>
+        <span className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+          <MonitorSmartphone className="h-3 w-3 shrink-0" />
+          Parallels VMs
+        </span>
         <button onClick={refresh} title="Refresh" className="rounded p-0.5 text-gray-400 hover:bg-black/5 dark:hover:bg-white/10">
           <RefreshCw className="h-3 w-3" />
         </button>

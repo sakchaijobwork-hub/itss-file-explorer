@@ -303,7 +303,7 @@ ipcMain.handle("fs:getHome", () => os.homedir());
 
 ipcMain.handle("fs:getQuickAccess", () => {
   const home = os.homedir();
-  const common = ["Desktop", "Documents", "Downloads", "Pictures", "Music", "Videos"];
+  const common = ["Desktop", "Documents", "Downloads"];
   return common.map((name) => ({ name, path: path.join(home, name) }));
 });
 

@@ -69,10 +69,8 @@ export function PdfFileIcon(props: BadgeProps) {
 
 export function TextFileIcon(props: BadgeProps) {
   return (
-    <SquircleBadge from="#8b97ab" to="#5b6677" {...props}>
-      <rect x="7" y="6" width="10" height="1.8" rx="0.9" fill="#fff" opacity="0.9" />
-      <rect x="7" y="10.5" width="10" height="1.8" rx="0.9" fill="#fff" opacity="0.75" />
-      <rect x="7" y="15" width="6.5" height="1.8" rx="0.9" fill="#fff" opacity="0.6" />
+    <SquircleBadge from="#5a9ad4" to="#2f6fb0" {...props}>
+      <Letter text="TXT" size={7.5} y={15.5} />
     </SquircleBadge>
   );
 }
