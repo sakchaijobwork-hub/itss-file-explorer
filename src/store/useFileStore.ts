@@ -21,6 +21,7 @@ interface FileStoreState {
   lastSelectedPath: string | null;
 
   clipboard: ClipboardState;
+  recentlyPastedPaths: Set<string>;
 
   viewMode: ViewMode;
   sortKey: SortKey;
@@ -57,6 +58,9 @@ interface FileStoreState {
   setClipboard: (mode: "copy" | "cut", paths: string[]) => void;
   clearClipboard: () => void;
 
+  setRecentlyPasted: (paths: string[]) => void;
+  clearRecentlyPasted: () => void;
+
   setViewMode: (mode: ViewMode) => void;
   setSort: (key: SortKey, direction?: SortDirection) => void;
   toggleHidden: () => void;
@@ -81,6 +85,7 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
   lastSelectedPath: null,
 
   clipboard: { mode: null, paths: [] },
+  recentlyPastedPaths: new Set(),
 
   viewMode: "grid",
   sortKey: "name",
@@ -234,6 +239,9 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
 
   setClipboard: (mode, paths) => set({ clipboard: { mode, paths } }),
   clearClipboard: () => set({ clipboard: { mode: null, paths: [] } }),
+
+  setRecentlyPasted: (paths) => set({ recentlyPastedPaths: new Set(paths) }),
+  clearRecentlyPasted: () => set({ recentlyPastedPaths: new Set() }),
 
   setViewMode: (mode) => set({ viewMode: mode }),
   setSort: (key, direction) =>

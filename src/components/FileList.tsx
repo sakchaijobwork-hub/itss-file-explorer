@@ -51,6 +51,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const openTab = useFileStore((s) => s.openTab);
   const setClipboard = useFileStore((s) => s.setClipboard);
   const clipboard = useFileStore((s) => s.clipboard);
+  const recentlyPastedPaths = useFileStore((s) => s.recentlyPastedPaths);
   const tagsMap = useUiStore((s) => s.tagsMap);
   const toggleTag = useUiStore((s) => s.toggleTag);
   const loadTags = useUiStore((s) => s.loadTags);
@@ -557,6 +558,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             viewMode={viewMode}
             isSelected={selectedPaths.has(item.entry.path)}
             isCut={clipboard.mode === "cut" && clipboard.paths.includes(item.entry.path)}
+            isJustPasted={recentlyPastedPaths.has(item.entry.path)}
             isRenaming={renamingPath === item.entry.path}
             tags={tagsMap[item.entry.path] ?? []}
             iconSize={gridIconSize}
@@ -706,6 +708,7 @@ function FileItem({
   viewMode,
   isSelected,
   isCut,
+  isJustPasted,
   isRenaming,
   tags,
   iconSize = 96,
@@ -721,6 +724,7 @@ function FileItem({
   viewMode: ViewMode;
   isSelected: boolean;
   isCut: boolean;
+  isJustPasted: boolean;
   isRenaming: boolean;
   tags: TagColor[];
   iconSize?: number;
@@ -747,7 +751,8 @@ function FileItem({
   const baseClasses = clsx(
     "group cursor-default select-none rounded-md transition-colors",
     isSelected ? "bg-accent/20 ring-1 ring-accent/40" : "hover:bg-black/5 dark:hover:bg-white/5",
-    isCut && "opacity-50"
+    isCut && "opacity-50",
+    isJustPasted && "animate-paste-flash"
   );
 
   if (viewMode === "grid") {

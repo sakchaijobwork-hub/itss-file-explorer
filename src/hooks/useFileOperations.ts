@@ -11,16 +11,19 @@ function dirnameOf(p: string): string {
   return p.replace(/[/\\][^/\\]+[/\\]?$/, "") || "/";
 }
 
+function getCurrentPath(): string {
+  const s = useFileStore.getState();
+  return s.tabs.find((t) => t.id === s.activeTabId)?.path ?? "";
+}
+
 export function useFileOperations() {
-  const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
-  const selectedPaths = useFileStore((s) => s.selectedPaths);
-  const entries = useFileStore((s) => s.entries);
-  const clipboard = useFileStore((s) => s.clipboard);
   const setClipboard = useFileStore((s) => s.setClipboard);
   const clearClipboard = useFileStore((s) => s.clearClipboard);
   const startRename = useFileStore((s) => s.startRename);
   const clearSelection = useFileStore((s) => s.clearSelection);
   const select = useFileStore((s) => s.select);
+  const setRecentlyPasted = useFileStore((s) => s.setRecentlyPasted);
+  const clearRecentlyPasted = useFileStore((s) => s.clearRecentlyPasted);
   const undoStackLength = useUiStore((s) => s.undoStack.length);
   const redoStackLength = useUiStore((s) => s.redoStack.length);
   const pushUndoAction = useUiStore((s) => s.pushUndoAction);
@@ -29,47 +32,63 @@ export function useFileOperations() {
   const pushRedoAction = useUiStore((s) => s.pushRedoAction);
   const pushUndoBack = useUiStore((s) => s.pushUndoBack);
 
-  const currentPath = activeTab?.path ?? "";
-
   const copySelection = useCallback(() => {
-    setClipboard("copy", Array.from(selectedPaths));
-  }, [selectedPaths, setClipboard]);
+    setClipboard("copy", Array.from(useFileStore.getState().selectedPaths));
+  }, [setClipboard]);
 
   const cutSelection = useCallback(() => {
-    setClipboard("cut", Array.from(selectedPaths));
-  }, [selectedPaths, setClipboard]);
+    setClipboard("cut", Array.from(useFileStore.getState().selectedPaths));
+  }, [setClipboard]);
+
+  const flashPasted = useCallback(
+    (paths: string[]) => {
+      setRecentlyPasted(paths);
+      select(paths[0], "single");
+      for (const p of paths.slice(1)) select(p, "toggle");
+      window.setTimeout(clearRecentlyPasted, 2000);
+    },
+    [setRecentlyPasted, clearRecentlyPasted, select]
+  );
 
   const paste = useCallback(async () => {
     const opId = `op-${++opCounter}`;
+    const currentPath = getCurrentPath();
+    const clipboard = useFileStore.getState().clipboard;
     if (clipboard.paths.length === 0) {
       const osPaths = await window.fileAPI.readClipboardFiles();
       if (osPaths.length === 0) return;
       await window.fileAPI.copy(osPaths, currentPath, opId);
+      const createdPaths = osPaths.map((p) => joinPath(currentPath, basename(p)));
       pushUndoAction({
         type: "copy",
         sourcePaths: osPaths,
-        createdPaths: osPaths.map((p) => joinPath(currentPath, basename(p))),
+        createdPaths,
         destDir: currentPath,
       });
+      flashPasted(createdPaths);
       return;
     }
     if (clipboard.mode === "copy") {
       await window.fileAPI.copy(clipboard.paths, currentPath, opId);
+      const createdPaths = clipboard.paths.map((p) => joinPath(currentPath, basename(p)));
       pushUndoAction({
         type: "copy",
         sourcePaths: clipboard.paths,
-        createdPaths: clipboard.paths.map((p) => joinPath(currentPath, basename(p))),
+        createdPaths,
         destDir: currentPath,
       });
+      flashPasted(createdPaths);
     } else if (clipboard.mode === "cut") {
       const items = clipboard.paths.map((p) => ({ from: p, to: joinPath(currentPath, basename(p)) }));
       await window.fileAPI.move(clipboard.paths, currentPath, opId);
       pushUndoAction({ type: "move", items });
       clearClipboard();
+      flashPasted(items.map((i) => i.to));
     }
-  }, [clipboard, currentPath, clearClipboard, pushUndoAction]);
+  }, [clearClipboard, pushUndoAction, flashPasted]);
 
   const deleteSelection = useCallback(async (permanent = false) => {
+    const { selectedPaths, entries } = useFileStore.getState();
     const paths = Array.from(selectedPaths);
     if (paths.length === 0) return;
     const names = paths.map((p) => entries.find((e) => e.path === p)?.name ?? p);
@@ -82,9 +101,11 @@ export function useFileOperations() {
       await window.fileAPI.deleteToTrash(paths);
     }
     clearSelection();
-  }, [selectedPaths, entries, clearSelection]);
+  }, [clearSelection]);
 
   const createNewFolder = useCallback(async () => {
+    const currentPath = getCurrentPath();
+    const entries = useFileStore.getState().entries;
     let name = "New Folder";
     let n = 1;
     const existingNames = new Set(entries.map((e) => e.name));
@@ -94,9 +115,11 @@ export function useFileOperations() {
     const target = await window.fileAPI.createFolder(currentPath, name);
     startRename(target);
     select(target, "single");
-  }, [currentPath, entries, startRename, select]);
+  }, [startRename, select]);
 
   const createNewFile = useCallback(async () => {
+    const currentPath = getCurrentPath();
+    const entries = useFileStore.getState().entries;
     let name = "New File.txt";
     let n = 1;
     const existingNames = new Set(entries.map((e) => e.name));
@@ -106,7 +129,7 @@ export function useFileOperations() {
     const target = await window.fileAPI.createFile(currentPath, name);
     startRename(target);
     select(target, "single");
-  }, [currentPath, entries, startRename, select]);
+  }, [startRename, select]);
 
   const renameEntry = useCallback(
     async (oldPath: string, newName: string) => {

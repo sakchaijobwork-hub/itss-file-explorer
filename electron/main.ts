@@ -353,8 +353,9 @@ ipcMain.handle("fs:rename", async (_e, oldPath: string, newName: string) => {
 });
 
 ipcMain.handle("fs:delete", async (_e, paths: string[]) => {
-  const trashModule = await import("trash");
-  await trashModule.default(paths);
+  for (const p of paths) {
+    await shell.trashItem(p);
+  }
 });
 
 ipcMain.handle("fs:deletePermanent", async (_e, paths: string[]) => {

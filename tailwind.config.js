@@ -21,6 +21,15 @@ module.exports = {
       borderRadius: {
         lg: "10px",
       },
+      keyframes: {
+        "paste-flash": {
+          "0%, 40%": { backgroundColor: "rgba(59, 130, 246, 0.35)" },
+          "100%": { backgroundColor: "rgba(59, 130, 246, 0)" },
+        },
+      },
+      animation: {
+        "paste-flash": "paste-flash 2s ease-out",
+      },
     },
   },
   plugins: [],
