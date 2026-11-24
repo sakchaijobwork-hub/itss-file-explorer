@@ -11,8 +11,15 @@ export function TabsBar() {
   const openTab = useFileStore((s) => s.openTab);
   const activeTab = tabs.find((t) => t.id === activeTabId);
 
+  const isMac = window.fileAPI.platform === "darwin";
+
   return (
-    <div className="drag flex h-9 items-center gap-1 bg-panel-light px-2 pt-1 dark:bg-panel-dark">
+    <div
+      className={clsx(
+        "drag flex h-9 items-center gap-1 bg-panel-light pt-1 dark:bg-panel-dark",
+        isMac ? "pl-20 pr-2" : "px-2"
+      )}
+    >
       <div className="no-drag flex flex-1 items-center gap-1 overflow-x-auto">
         {tabs.map((tab) => (
           <button
