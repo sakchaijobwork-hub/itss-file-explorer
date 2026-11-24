@@ -30,18 +30,32 @@ export function TabsBar() {
 
   const isMac = window.fileAPI.platform === "darwin";
 
-  async function showColorMenu(tabId: string, current: TagColor | undefined) {
+  async function showTabMenu(tabId: string, path: string, current: TagColor | undefined) {
     const action = await window.fileAPI.showContextMenu([
-      { id: "color:none", label: "None", checked: !current },
-      ...TAG_COLORS.map((c) => ({
-        id: `color:${c}`,
-        label: `${TAG_SWATCH[c]}  ${c[0].toUpperCase() + c.slice(1)}`,
-        checked: current === c,
-      })),
+      { id: "duplicateTab", label: "Duplicate Tab" },
+      { type: "separator", id: "sep1", label: "" },
+      {
+        id: "color",
+        label: "Color",
+        submenu: [
+          { id: "color:none", label: "None", checked: !current },
+          ...TAG_COLORS.map((c) => ({
+            id: `color:${c}`,
+            label: `${TAG_SWATCH[c]}  ${c[0].toUpperCase() + c.slice(1)}`,
+            checked: current === c,
+          })),
+        ],
+      },
     ]);
     if (!action) return;
-    const color = action === "color:none" ? undefined : (action.slice(6) as TagColor);
-    setTabColor(tabId, color);
+    if (action === "duplicateTab") {
+      openTab(path);
+      return;
+    }
+    if (action.startsWith("color:")) {
+      const color = action === "color:none" ? undefined : (action.slice(6) as TagColor);
+      setTabColor(tabId, color);
+    }
   }
 
   return (
@@ -58,7 +72,7 @@ export function TabsBar() {
             onClick={() => setActiveTab(tab.id)}
             onContextMenu={(e) => {
               e.preventDefault();
-              showColorMenu(tab.id, tab.color);
+              showTabMenu(tab.id, tab.path, tab.color);
             }}
             className={clsx(
               "group flex h-7 min-w-[120px] max-w-[180px] items-center gap-1.5 rounded-t-md px-3 text-xs transition-colors",

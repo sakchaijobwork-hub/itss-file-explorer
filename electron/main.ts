@@ -494,6 +494,8 @@ interface ContextMenuItem {
 const MENU_ICON_NAMES: Record<string, string> = {
   open: "folder-open",
   openInNewTab: "square-plus",
+  duplicateTab: "copy-plus",
+  color: "palette",
   openWith: "app-window",
   showInFolder: "folder-search",
   print: "printer",
