@@ -1,5 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Clock, HardDrive, Home, Star, Plus, X, Trash2, MonitorSmartphone, RefreshCw, Bookmark } from "lucide-react";
+import {
+  Clock,
+  HardDrive,
+  Home,
+  Star,
+  Plus,
+  X,
+  Trash2,
+  MonitorSmartphone,
+  RefreshCw,
+  Bookmark,
+  Monitor,
+  FileText,
+  Download,
+} from "lucide-react";
+
+const QUICK_ACCESS_ICONS: Record<string, typeof Home> = {
+  Desktop: Monitor,
+  Documents: FileText,
+  Downloads: Download,
+};
 import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
 import type { ParallelsVm, QuickAccessItem } from "@/types";
@@ -168,7 +188,12 @@ export function Sidebar() {
         <div className="flex flex-col gap-0.5">
           <SidebarItem label="Home" path={home} icon={Home} />
           {quickAccess.map((item) => (
-            <SidebarItem key={item.path} label={item.name} path={item.path} icon={Star} />
+            <SidebarItem
+              key={item.path}
+              label={item.name}
+              path={item.path}
+              icon={QUICK_ACCESS_ICONS[item.name] ?? Star}
+            />
           ))}
           <button
             onClick={() => openModal("recents")}
