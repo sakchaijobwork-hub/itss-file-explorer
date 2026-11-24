@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Download, RefreshCw, X } from "lucide-react";
+import { Check, Download, RefreshCw, X } from "lucide-react";
 import type { UpdateStatus } from "@/types";
 
 export function UpdateBanner() {
@@ -9,15 +9,38 @@ export function UpdateBanner() {
   useEffect(() => {
     return window.fileAPI.onUpdateStatus((s) => {
       setStatus(s);
-      if (s.state === "available") setDismissed(false);
+      setDismissed(false);
     });
   }, []);
 
+  useEffect(() => {
+    // "Checking..." and "you're up to date" are brief, low-stakes
+    // confirmations — auto-dismiss them so they don't linger. Without
+    // this, clicking "Check for Updates" while already current gave
+    // no visible feedback at all (status stayed hidden), which looked
+    // like the click did nothing.
+    if (status?.state === "checking" || status?.state === "not-available") {
+      const t = setTimeout(() => setDismissed(true), 3500);
+      return () => clearTimeout(t);
+    }
+  }, [status]);
+
   if (!status || dismissed) return null;
-  if (status.state === "checking" || status.state === "not-available") return null;
 
   return (
     <div className="no-drag flex h-8 shrink-0 items-center justify-center gap-3 border-b border-accent/20 bg-accent/10 px-3 text-xs text-accent">
+      {status.state === "checking" && (
+        <>
+          <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+          <span>Checking for updates…</span>
+        </>
+      )}
+      {status.state === "not-available" && (
+        <>
+          <Check className="h-3.5 w-3.5" />
+          <span>You're on the latest version.</span>
+        </>
+      )}
       {status.state === "available" && (
         <>
           <RefreshCw className="h-3.5 w-3.5" />
