@@ -2,17 +2,8 @@ import { Plus, X } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
 import { basename } from "@/utils/format";
 import { TAG_COLORS, type TagColor } from "@/types";
+import { TAG_HEX } from "@/utils/tagColors";
 import clsx from "clsx";
-
-const TAG_HEX: Record<TagColor, string> = {
-  red: "#ef4444",
-  orange: "#f97316",
-  yellow: "#eab308",
-  green: "#22c55e",
-  blue: "#3b82f6",
-  purple: "#a855f7",
-  gray: "#9ca3af",
-};
 
 // Native OS menus can't render arbitrary colored icons for plain-text
 // MenuItems without a lot of extra plumbing, but colored circle emoji

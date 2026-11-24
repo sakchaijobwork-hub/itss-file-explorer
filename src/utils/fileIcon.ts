@@ -1,4 +1,5 @@
 import type { ComponentType, CSSProperties } from "react";
+import type { TagColor } from "@/types";
 import { FolderIcon } from "@/components/icons/FolderIcon";
 import {
   WordIcon,
@@ -24,7 +25,7 @@ const ARCHIVE_EXTS = ["zip", "rar", "7z", "tar", "gz", "tgz"];
 const CODE_EXTS = ["js", "ts", "tsx", "jsx", "json", "py", "java", "go", "rs", "html", "css", "c", "cpp", "sh"];
 const TEXT_EXTS = ["txt", "md", "rtf", "pages"];
 
-type IconComponent = ComponentType<{ className?: string; style?: CSSProperties }>;
+type IconComponent = ComponentType<{ className?: string; style?: CSSProperties; color?: TagColor }>;
 
 const EXT_MAP: Record<string, IconComponent> = {
   ...Object.fromEntries(IMAGE_EXTS.map((e) => [e, ImageFileIcon])),

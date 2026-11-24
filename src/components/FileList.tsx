@@ -8,6 +8,7 @@ import { useVideoThumbnail } from "@/hooks/useVideoThumbnail";
 import { getFileIconComponent, getKindLabel } from "@/utils/fileIcon";
 import { formatBytes, formatDate } from "@/utils/format";
 import { setDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
+import { TAG_HEX } from "@/utils/tagColors";
 import { RenameInput } from "./RenameInput";
 import type { FileEntry, SortKey, TagColor, ViewMode } from "@/types";
 import { TAG_COLORS } from "@/types";
@@ -23,16 +24,6 @@ const TEXT_PRINT_EXTS = new Set([
 ]);
 const PRINTABLE_EXTS = new Set(["pdf", ...IMAGE_EXTS, ...TEXT_PRINT_EXTS, ...OFFICE_PREVIEW_EXTS]);
 const VIDEO_EXTS = new Set(["mp4", "webm", "mov", "m4v"]);
-
-const TAG_HEX: Record<TagColor, string> = {
-  red: "#ef4444",
-  orange: "#f97316",
-  yellow: "#eab308",
-  green: "#22c55e",
-  blue: "#3b82f6",
-  purple: "#a855f7",
-  gray: "#9ca3af",
-};
 
 function selectMode(e: React.MouseEvent): "single" | "toggle" | "range" {
   if (e.shiftKey) return "range";
@@ -183,6 +174,19 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             })),
           },
           {
+            id: "folderColor",
+            label: "Folder Color",
+            enabled: selectedList.some((p) => entries.find((en) => en.path === p)?.isDirectory),
+            submenu: [
+              { id: "foldercolor:none", label: "None", checked: currentTags.length === 0 },
+              ...TAG_COLORS.map((tag) => ({
+                id: `foldercolor:${tag}`,
+                label: tag[0].toUpperCase() + tag.slice(1),
+                checked: currentTags[0] === tag,
+              })),
+            ],
+          },
+          {
             id: "compress",
             label: "Compress to Zip",
           },
@@ -275,6 +279,18 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         }
         await loadTags();
       }
+      return;
+    }
+
+    if (action.startsWith("foldercolor:")) {
+      const value = action.slice(12);
+      const color = value === "none" ? undefined : (value as TagColor);
+      for (const p of selectedList) {
+        if (entries.find((en) => en.path === p)?.isDirectory) {
+          await window.fileAPI.setTags(p, color ? [color] : []);
+        }
+      }
+      await loadTags();
       return;
     }
 
@@ -586,6 +602,7 @@ function Thumbnail({
   const isImage = !entry.isDirectory && IMAGE_EXTS.has(entry.extension);
   const isVideo = !entry.isDirectory && VIDEO_EXTS.has(entry.extension);
   const videoThumb = useVideoThumbnail(entry.path, isVideo && !errored);
+  const folderColor = useUiStore((s) => (entry.isDirectory ? s.tagsMap[entry.path]?.[0] : undefined));
 
   if (isImage && !errored) {
     return (
@@ -613,6 +630,7 @@ function Thumbnail({
     <IconFallback
       className={clsx(entry.isDirectory ? "text-accent" : "text-gray-500 dark:text-gray-400", className)}
       style={{ width: size, height: size }}
+      color={folderColor}
     />
   );
 }
