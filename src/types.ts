@@ -34,15 +34,16 @@ export interface QuickAccessItem {
   path: string;
 }
 
+export const TAG_COLORS = ["red", "orange", "yellow", "green", "blue", "purple", "gray"] as const;
+export type TagColor = (typeof TAG_COLORS)[number];
+
 export interface Tab {
   id: string;
   path: string;
   history: string[];
   historyIndex: number;
+  color?: TagColor;
 }
-
-export const TAG_COLORS = ["red", "orange", "yellow", "green", "blue", "purple", "gray"] as const;
-export type TagColor = (typeof TAG_COLORS)[number];
 
 export interface DuplicateGroup {
   hash: string;

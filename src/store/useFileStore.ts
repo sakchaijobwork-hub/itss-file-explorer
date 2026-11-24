@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { FileEntry, SortDirection, SortKey, Tab, ViewMode } from "@/types";
+import type { FileEntry, SortDirection, SortKey, Tab, TagColor, ViewMode } from "@/types";
 
 let tabCounter = 0;
 const newTabId = () => `tab-${++tabCounter}-${Date.now()}`;
@@ -37,6 +37,7 @@ interface FileStoreState {
   setActiveTab: (id: string) => void;
   openTab: (path: string) => void;
   closeTab: (id: string) => void;
+  setTabColor: (id: string, color: TagColor | undefined) => void;
 
   navigateTo: (path: string) => void;
   goBack: () => void;
@@ -142,6 +143,12 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
       }
       return { tabs, activeTabId };
     });
+  },
+
+  setTabColor: (id, color) => {
+    set((s) => ({
+      tabs: s.tabs.map((t) => (t.id === id ? { ...t, color } : t)),
+    }));
   },
 
   navigateTo: (path) => {
