@@ -4,6 +4,7 @@ import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
 import type { FavoriteEntry, ParallelsVm, QuickAccessItem } from "@/types";
 import { formatBytes } from "@/utils/format";
+import { getDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
 import clsx from "clsx";
 
 function SidebarItem({
@@ -77,7 +78,14 @@ export function Sidebar() {
   async function handleFavoritesDrop(e: React.DragEvent) {
     e.preventDefault();
     setFavDragOver(false);
-    const paths = Array.from(e.dataTransfer.files).map((f) => window.fileAPI.getPathForFile(f));
+    // Rows in FileList are dragged out via Electron's native OS-level
+    // drag (for dropping onto Finder/other apps), not a normal browser
+    // drag, so dataTransfer.files is never populated for that case —
+    // read the paths tracked out-of-band instead. A drag that truly
+    // comes from outside the app (e.g. dragging a folder in from
+    // Finder) still arrives via dataTransfer.files as usual.
+    const tracked = getDraggingPaths();
+    const paths = tracked.length > 0 ? tracked : Array.from(e.dataTransfer.files).map((f) => window.fileAPI.getPathForFile(f));
     let updated = favorites;
     for (const p of paths) {
       const info = await window.fileAPI.getInfo(p);
@@ -86,6 +94,7 @@ export function Sidebar() {
       }
     }
     setFavorites(updated);
+    clearDraggingPaths();
   }
 
   return (
@@ -118,10 +127,12 @@ export function Sidebar() {
 
       <div
         onDragOver={(e) => {
-          if (e.dataTransfer.types.includes("Files")) {
-            e.preventDefault();
-            setFavDragOver(true);
-          }
+          // An in-app native OS drag (see handleFavoritesDrop) doesn't
+          // necessarily report "Files" in dataTransfer.types, so this
+          // stays permissive rather than gating on that; dropping
+          // anything that isn't actually a folder path is a no-op.
+          e.preventDefault();
+          setFavDragOver(true);
         }}
         onDragLeave={() => setFavDragOver(false)}
         onDrop={handleFavoritesDrop}

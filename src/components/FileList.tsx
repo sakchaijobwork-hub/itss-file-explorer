@@ -7,6 +7,7 @@ import { useFileOperations } from "@/hooks/useFileOperations";
 import { useVideoThumbnail } from "@/hooks/useVideoThumbnail";
 import { getFileIconComponent, getKindLabel } from "@/utils/fileIcon";
 import { formatBytes, formatDate } from "@/utils/format";
+import { setDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
 import { RenameInput } from "./RenameInput";
 import type { FileEntry, SortKey, TagColor, ViewMode } from "@/types";
 import { TAG_COLORS } from "@/types";
@@ -503,8 +504,10 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             onDragStart={(e) => {
               e.preventDefault();
               const paths = selectedPaths.has(item.entry.path) ? Array.from(selectedPaths) : [item.entry.path];
+              setDraggingPaths(paths);
               window.fileAPI.startDrag(paths);
             }}
+            onDragEnd={clearDraggingPaths}
             onContextMenu={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -625,6 +628,7 @@ function FileItem({
   onCommitRename,
   onCancelRename,
   onDragStart,
+  onDragEnd,
 }: {
   entry: FileEntry;
   viewMode: ViewMode;
@@ -639,6 +643,7 @@ function FileItem({
   onCommitRename: (value: string) => void;
   onCancelRename: () => void;
   onDragStart: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
 }) {
   const Icon = getFileIconComponent(entry.extension, entry.isDirectory);
   const inputClass =
@@ -670,6 +675,7 @@ function FileItem({
         onContextMenu={onContextMenu}
         draggable
         onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
         title={entry.name}
       >
         <Thumbnail entry={entry} size={Math.round(iconSize * 0.4)} IconFallback={Icon} className="shrink-0" />
@@ -691,6 +697,7 @@ function FileItem({
         onContextMenu={onContextMenu}
         draggable
         onDragStart={onDragStart}
+        onDragEnd={onDragEnd}
       >
         <Thumbnail entry={entry} size={16} IconFallback={Icon} className="shrink-0" />
         {nameNode}
@@ -711,6 +718,7 @@ function FileItem({
       onContextMenu={onContextMenu}
       draggable
       onDragStart={onDragStart}
+      onDragEnd={onDragEnd}
     >
       <div className="flex items-center gap-2 overflow-hidden">
         <Thumbnail entry={entry} size={16} IconFallback={Icon} className="shrink-0" />
