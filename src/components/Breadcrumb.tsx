@@ -61,16 +61,30 @@ export function Breadcrumb() {
 
   const segments = splitPathSegments(activeTab.path);
 
+  async function copyPath(path: string) {
+    const action = await window.fileAPI.showContextMenu([{ id: "copyPath", label: "Copy Path" }]);
+    if (action === "copyPath") await navigator.clipboard.writeText(path);
+  }
+
   return (
     <div
       className="no-drag group flex h-8 items-center gap-0.5 overflow-x-auto border-b border-black/5 bg-surface-light px-3 text-xs text-gray-600 dark:border-white/5 dark:bg-surface-dark dark:text-gray-300"
       onDoubleClick={() => setEditing(true)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        copyPath(activeTab.path);
+      }}
     >
       {segments.map((seg, i) => (
         <div key={seg.path} className="flex shrink-0 items-center gap-0.5">
           {i > 0 && <ChevronRight className="h-3 w-3 text-gray-400" />}
           <button
             onClick={() => navigateTo(seg.path)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              copyPath(seg.path);
+            }}
             className="rounded px-1.5 py-0.5 hover:bg-black/5 dark:hover:bg-white/10"
           >
             {seg.label}
