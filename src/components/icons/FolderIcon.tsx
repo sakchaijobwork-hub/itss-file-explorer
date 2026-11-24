@@ -11,9 +11,11 @@ export function FolderIcon({ className, style }: { className?: string; style?: C
           <stop offset="100%" stopColor="#2f66d6" />
         </linearGradient>
       </defs>
-      <rect x="3" y="7" width="18" height="12" rx="2.2" fill={`url(#${gradId})`} />
-      <rect x="3" y="5" width="9" height="4" rx="1.4" fill="#9cc4ff" />
-      <rect x="7" y="12.2" width="10" height="1.6" rx="0.8" fill="#dce8ff" opacity="0.85" />
+      <g transform="translate(12 12) scale(1.2) translate(-12 -12)">
+        <rect x="3" y="7" width="18" height="12" rx="2.2" fill={`url(#${gradId})`} />
+        <rect x="3" y="5" width="9" height="4" rx="1.4" fill="#9cc4ff" />
+        <rect x="7" y="12.2" width="10" height="1.6" rx="0.8" fill="#dce8ff" opacity="0.85" />
+      </g>
     </svg>
   );
 }

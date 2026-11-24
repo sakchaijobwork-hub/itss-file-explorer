@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Undo2, Redo2 } from "lucide-react";
 import { useFileStore } from "@/store/useFileStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
@@ -7,6 +8,11 @@ export function StatusBar() {
   const entries = useFileStore((s) => s.entries);
   const selectedPaths = useFileStore((s) => s.selectedPaths);
   const { canUndo, canRedo, performUndo, performRedo } = useFileOperations();
+  const [version, setVersion] = useState("");
+
+  useEffect(() => {
+    window.fileAPI.getCurrentVersion().then(setVersion);
+  }, []);
 
   const selectedCount = selectedPaths.size;
   const totalSize = entries
@@ -31,6 +37,7 @@ export function StatusBar() {
       <span>
         {selectedCount > 0 ? `${selectedCount} selected · ` : ""}
         {formatBytes(totalSize)}
+        {version && ` · v${version}`}
       </span>
     </div>
   );
