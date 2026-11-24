@@ -42,6 +42,7 @@ export default function App() {
     useFileOperations();
   const setViewMode = useFileStore((s) => s.setViewMode);
   const setSort = useFileStore((s) => s.setSort);
+  const sortKey = useFileStore((s) => s.sortKey);
   const toggleHidden = useFileStore((s) => s.toggleHidden);
   const toggleTheme = useFileStore((s) => s.toggleTheme);
   const themeMode = useFileStore((s) => s.themeMode);
@@ -224,6 +225,24 @@ export default function App() {
         case "view-columns":
           setViewMode("columns");
           break;
+        case "sort-name":
+          setSort("name");
+          break;
+        case "sort-size":
+          setSort("size");
+          break;
+        case "sort-modifiedAt":
+          setSort("modifiedAt");
+          break;
+        case "sort-type":
+          setSort("type");
+          break;
+        case "sort-asc":
+          setSort(sortKey, "asc");
+          break;
+        case "sort-desc":
+          setSort(sortKey, "desc");
+          break;
         case "zoom-in":
           setGridIconSize(Math.min(160, gridIconSize + 8));
           break;
@@ -296,6 +315,8 @@ export default function App() {
     performRedo,
     openModal,
     setViewMode,
+    setSort,
+    sortKey,
     setGridIconSize,
     gridIconSize,
     toggleHidden,

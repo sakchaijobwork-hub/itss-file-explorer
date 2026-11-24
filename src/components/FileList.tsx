@@ -255,6 +255,20 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           },
           { id: "paste", label: "Paste", enabled: clipboard.paths.length > 0 },
           { type: "separator" as const, id: "sep1", label: "" },
+          {
+            id: "sortBy",
+            label: "Sort By",
+            submenu: [
+              { id: "sort:name", label: "Name", checked: sortKey === "name" },
+              { id: "sort:size", label: "Size", checked: sortKey === "size" },
+              { id: "sort:modifiedAt", label: "Date Modified", checked: sortKey === "modifiedAt" },
+              { id: "sort:type", label: "Type", checked: sortKey === "type" },
+              { type: "separator" as const, id: "sort-sep", label: "" },
+              { id: "sortdir:asc", label: "Ascending", checked: sortDirection === "asc" },
+              { id: "sortdir:desc", label: "Descending", checked: sortDirection === "desc" },
+            ],
+          },
+          { type: "separator" as const, id: "sep1b", label: "" },
           { id: "openTerminal", label: "Open Terminal Here" },
           { id: "remote", label: "Connect to FTP/SFTP/WebDAV…" },
           { id: "automation", label: "Folder Automation Rules…" },
@@ -281,6 +295,16 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         }
         await loadTags();
       }
+      return;
+    }
+
+    if (action.startsWith("sort:")) {
+      setSort(action.slice(5) as SortKey);
+      return;
+    }
+
+    if (action.startsWith("sortdir:")) {
+      setSort(sortKey, action.slice(8) as "asc" | "desc");
       return;
     }
 
