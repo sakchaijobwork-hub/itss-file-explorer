@@ -61,8 +61,8 @@ export function useFileOperations() {
     if (clipboard.paths.length === 0) {
       const osPaths = await window.fileAPI.readClipboardFiles();
       if (osPaths.length === 0) return;
-      await window.fileAPI.copy(osPaths, currentPath, opId);
-      const createdPaths = osPaths.map((p) => joinPath(currentPath, basename(p)));
+      const createdPaths = await window.fileAPI.copy(osPaths, currentPath, opId);
+      if (createdPaths.length === 0) return;
       pushUndoAction({
         type: "copy",
         sourcePaths: osPaths,
@@ -73,8 +73,8 @@ export function useFileOperations() {
       return;
     }
     if (clipboard.mode === "copy") {
-      await window.fileAPI.copy(clipboard.paths, currentPath, opId);
-      const createdPaths = clipboard.paths.map((p) => joinPath(currentPath, basename(p)));
+      const createdPaths = await window.fileAPI.copy(clipboard.paths, currentPath, opId);
+      if (createdPaths.length === 0) return;
       pushUndoAction({
         type: "copy",
         sourcePaths: clipboard.paths,
@@ -83,10 +83,10 @@ export function useFileOperations() {
       });
       flashPasted(createdPaths);
     } else if (clipboard.mode === "cut") {
-      const items = clipboard.paths.map((p) => ({ from: p, to: joinPath(currentPath, basename(p)) }));
-      await window.fileAPI.move(clipboard.paths, currentPath, opId);
-      pushUndoAction({ type: "move", items });
+      const items = await window.fileAPI.move(clipboard.paths, currentPath, opId);
       clearClipboard();
+      if (items.length === 0) return;
+      pushUndoAction({ type: "move", items });
       flashPasted(items.map((i) => i.to));
     }
   }, [clearClipboard, pushUndoAction, flashPasted]);

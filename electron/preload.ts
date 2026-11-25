@@ -57,9 +57,9 @@ const api = {
     ipcRenderer.invoke("fs:rename", oldPath, newName),
   deleteToTrash: (paths: string[]): Promise<void> => ipcRenderer.invoke("fs:delete", paths),
   deletePermanent: (paths: string[]): Promise<void> => ipcRenderer.invoke("fs:deletePermanent", paths),
-  copy: (sourcePaths: string[], destDir: string, opId: string): Promise<void> =>
+  copy: (sourcePaths: string[], destDir: string, opId: string): Promise<string[]> =>
     ipcRenderer.invoke("fs:copy", sourcePaths, destDir, opId),
-  move: (sourcePaths: string[], destDir: string, opId: string): Promise<void> =>
+  move: (sourcePaths: string[], destDir: string, opId: string): Promise<{ from: string; to: string }[]> =>
     ipcRenderer.invoke("fs:move", sourcePaths, destDir, opId),
   readClipboardFiles: (): Promise<string[]> => ipcRenderer.invoke("fs:readClipboardFiles"),
   writeClipboardFiles: (paths: string[]): Promise<void> => ipcRenderer.invoke("fs:writeClipboardFiles", paths),

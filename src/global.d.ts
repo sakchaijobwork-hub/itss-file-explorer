@@ -50,8 +50,8 @@ export interface FileAPI {
   rename: (oldPath: string, newName: string) => Promise<string>;
   deleteToTrash: (paths: string[]) => Promise<void>;
   deletePermanent: (paths: string[]) => Promise<void>;
-  copy: (sourcePaths: string[], destDir: string, opId: string) => Promise<void>;
-  move: (sourcePaths: string[], destDir: string, opId: string) => Promise<void>;
+  copy: (sourcePaths: string[], destDir: string, opId: string) => Promise<string[]>;
+  move: (sourcePaths: string[], destDir: string, opId: string) => Promise<{ from: string; to: string }[]>;
   readClipboardFiles: () => Promise<string[]>;
   writeClipboardFiles: (paths: string[]) => Promise<void>;
   openPath: (targetPath: string) => Promise<string>;

@@ -377,17 +377,72 @@ async function copyRecursive(src: string, dest: string) {
   }
 }
 
-function uniqueDestName(destDir: string, baseName: string): string {
-  return path.join(destDir, baseName);
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await fs.access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function generateUniqueName(destDir: string, baseName: string): Promise<string> {
+  const ext = path.extname(baseName);
+  const stem = path.basename(baseName, ext);
+  let candidate = baseName;
+  let n = 2;
+  while (await pathExists(path.join(destDir, candidate))) {
+    candidate = `${stem} (${n})${ext}`;
+    n++;
+  }
+  return candidate;
+}
+
+type ConflictChoice = "skip" | "replace" | "keepBoth";
+
+async function resolveConflict(
+  win: BrowserWindow | undefined,
+  name: string,
+  showApplyToAll: boolean
+): Promise<{ choice: ConflictChoice; applyToAll: boolean }> {
+  const result = await dialog.showMessageBox(win as BrowserWindow, {
+    type: "warning",
+    message: `"${name}" already exists in this location.`,
+    detail: "Do you want to replace it with the one you're copying?",
+    buttons: ["Skip", "Keep Both", "Replace"],
+    defaultId: 2,
+    cancelId: 0,
+    checkboxLabel: showApplyToAll ? "Apply to all remaining items" : undefined,
+  });
+  const choice: ConflictChoice = result.response === 0 ? "skip" : result.response === 1 ? "keepBoth" : "replace";
+  return { choice, applyToAll: result.checkboxChecked };
 }
 
 ipcMain.handle(
   "fs:copy",
   async (e, sourcePaths: string[], destDir: string, opId: string) => {
+    const win = BrowserWindow.fromWebContents(e.sender) ?? undefined;
+    let applyAll: ConflictChoice | null = null;
+    const createdPaths: string[] = [];
     let i = 0;
     for (const src of sourcePaths) {
       const name = path.basename(src);
-      const dest = uniqueDestName(destDir, name);
+      let dest = path.join(destDir, name);
+      if (await pathExists(dest)) {
+        let choice: ConflictChoice | null = applyAll;
+        if (!choice) {
+          const resolved = await resolveConflict(win, name, sourcePaths.length - i > 1);
+          choice = resolved.choice;
+          if (resolved.applyToAll) applyAll = choice;
+        }
+        if (choice === "skip") {
+          i++;
+          continue;
+        }
+        if (choice === "keepBoth") {
+          dest = path.join(destDir, await generateUniqueName(destDir, name));
+        }
+      }
       e.sender.send("fs:progress", {
         id: opId,
         op: "copy",
@@ -397,6 +452,7 @@ ipcMain.handle(
         done: false,
       });
       await copyRecursive(src, dest);
+      createdPaths.push(dest);
       i++;
     }
     e.sender.send("fs:progress", {
@@ -407,16 +463,35 @@ ipcMain.handle(
       currentFile: "",
       done: true,
     });
+    return createdPaths;
   }
 );
 
 ipcMain.handle(
   "fs:move",
   async (e, sourcePaths: string[], destDir: string, opId: string) => {
+    const win = BrowserWindow.fromWebContents(e.sender) ?? undefined;
+    let applyAll: ConflictChoice | null = null;
+    const moved: { from: string; to: string }[] = [];
     let i = 0;
     for (const src of sourcePaths) {
       const name = path.basename(src);
-      const dest = uniqueDestName(destDir, name);
+      let dest = path.join(destDir, name);
+      if (await pathExists(dest)) {
+        let choice: ConflictChoice | null = applyAll;
+        if (!choice) {
+          const resolved = await resolveConflict(win, name, sourcePaths.length - i > 1);
+          choice = resolved.choice;
+          if (resolved.applyToAll) applyAll = choice;
+        }
+        if (choice === "skip") {
+          i++;
+          continue;
+        }
+        if (choice === "keepBoth") {
+          dest = path.join(destDir, await generateUniqueName(destDir, name));
+        }
+      }
       e.sender.send("fs:progress", {
         id: opId,
         op: "move",
@@ -431,6 +506,7 @@ ipcMain.handle(
         await copyRecursive(src, dest);
         await fs.rm(src, { recursive: true, force: true });
       }
+      moved.push({ from: src, to: dest });
       i++;
     }
     e.sender.send("fs:progress", {
@@ -441,6 +517,7 @@ ipcMain.handle(
       currentFile: "",
       done: true,
     });
+    return moved;
   }
 );
 
