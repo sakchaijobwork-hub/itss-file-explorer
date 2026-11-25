@@ -53,6 +53,7 @@ export interface FileAPI {
   copy: (sourcePaths: string[], destDir: string, opId: string) => Promise<void>;
   move: (sourcePaths: string[], destDir: string, opId: string) => Promise<void>;
   readClipboardFiles: () => Promise<string[]>;
+  writeClipboardFiles: (paths: string[]) => Promise<void>;
   openPath: (targetPath: string) => Promise<string>;
   startDrag: (filePaths: string[]) => void;
   getPathForFile: (file: File) => string;

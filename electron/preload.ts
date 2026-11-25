@@ -62,6 +62,7 @@ const api = {
   move: (sourcePaths: string[], destDir: string, opId: string): Promise<void> =>
     ipcRenderer.invoke("fs:move", sourcePaths, destDir, opId),
   readClipboardFiles: (): Promise<string[]> => ipcRenderer.invoke("fs:readClipboardFiles"),
+  writeClipboardFiles: (paths: string[]): Promise<void> => ipcRenderer.invoke("fs:writeClipboardFiles", paths),
 
   openPath: (targetPath: string) => ipcRenderer.invoke("fs:openPath", targetPath),
   startDrag: (filePaths: string[]) => ipcRenderer.send("fs:startDrag", filePaths),

@@ -479,6 +479,26 @@ ipcMain.handle("fs:readClipboardFiles", () => {
   return [];
 });
 
+// Writes the given paths to the OS clipboard the same way Finder does on a
+// Cmd+C, so pasting into another app (Slack, Claude desktop, Mail, ...)
+// attaches the actual files instead of leaving whatever text was previously
+// on the clipboard (our own "Copy" only updated in-app state, never this).
+ipcMain.handle("fs:writeClipboardFiles", (_e, paths: string[]) => {
+  if (paths.length === 0) return;
+  if (process.platform === "darwin") {
+    const items = paths
+      .map((p) => `\t<string>${p.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</string>`)
+      .join("\n");
+    const plist = `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<array>\n${items}\n</array>\n</plist>\n`;
+    clipboard.write({ text: paths.map((p) => path.basename(p)).join("\n") });
+    clipboard.writeBuffer("NSFilenamesPboardType", Buffer.from(plist, "utf8"));
+    return;
+  }
+  const uriList = paths.map((p) => `file://${p.replace(/\\/g, "/")}`).join("\r\n");
+  clipboard.write({ text: paths.map((p) => path.basename(p)).join("\n") });
+  clipboard.writeBuffer("text/uri-list", Buffer.from(uriList, "utf8"));
+});
+
 ipcMain.handle("system:newWindow", () => createWindow());
 
 ipcMain.handle("fs:getDiskSpace", async (_e, targetPath: string) => {

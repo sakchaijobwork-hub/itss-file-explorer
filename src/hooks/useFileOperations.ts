@@ -33,11 +33,15 @@ export function useFileOperations() {
   const pushUndoBack = useUiStore((s) => s.pushUndoBack);
 
   const copySelection = useCallback(() => {
-    setClipboard("copy", Array.from(useFileStore.getState().selectedPaths));
+    const paths = Array.from(useFileStore.getState().selectedPaths);
+    setClipboard("copy", paths);
+    window.fileAPI.writeClipboardFiles(paths);
   }, [setClipboard]);
 
   const cutSelection = useCallback(() => {
-    setClipboard("cut", Array.from(useFileStore.getState().selectedPaths));
+    const paths = Array.from(useFileStore.getState().selectedPaths);
+    setClipboard("cut", paths);
+    window.fileAPI.writeClipboardFiles(paths);
   }, [setClipboard]);
 
   const flashPasted = useCallback(
