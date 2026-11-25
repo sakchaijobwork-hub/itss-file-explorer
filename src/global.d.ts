@@ -151,7 +151,7 @@ export interface FileAPI {
   printFile: (filePath: string) => Promise<boolean>;
 
   listFavorites: () => Promise<FavoriteEntry[]>;
-  addFavorite: (folderPath: string) => Promise<FavoriteEntry[]>;
+  addFavorite: (targetPath: string, isDirectory?: boolean) => Promise<FavoriteEntry[]>;
   removeFavorite: (folderPath: string) => Promise<FavoriteEntry[]>;
   reorderFavorites: (orderedPaths: string[]) => Promise<FavoriteEntry[]>;
 

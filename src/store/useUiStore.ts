@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import type { FavoriteEntry, TagColor } from "@/types";
+import { dirname } from "@/utils/format";
 
 export type ModalKind =
   | null
@@ -67,8 +68,9 @@ interface UiState {
   toggleTag: (filePath: string, tag: TagColor) => Promise<void>;
 
   loadFavorites: () => Promise<void>;
-  addFavorite: (folderPath: string) => Promise<void>;
-  removeFavorite: (folderPath: string) => Promise<void>;
+  addFavorite: (targetPath: string, isDirectory?: boolean) => Promise<void>;
+  removeFavorite: (targetPath: string) => Promise<void>;
+  toggleFavorite: (targetPath: string, isDirectory: boolean) => Promise<void>;
   reorderFavorites: (orderedPaths: string[]) => Promise<void>;
 }
 
@@ -130,13 +132,29 @@ export const useUiStore = create<UiState>((set, get) => ({
     const favorites = await window.fileAPI.listFavorites();
     set({ favorites });
   },
-  addFavorite: async (folderPath) => {
-    const favorites = await window.fileAPI.addFavorite(folderPath);
+  // Favoriting a file also needs its parent folder pinned, since a
+  // favorited file is only ever shown nested under its folder in the
+  // sidebar's favorites tree — so a lone favorited file would otherwise
+  // have nowhere to appear.
+  addFavorite: async (targetPath, isDirectory = true) => {
+    if (!isDirectory) {
+      const parent = dirname(targetPath);
+      if (!get().favorites.some((f) => f.path === parent && f.isDirectory)) {
+        const favorites = await window.fileAPI.addFavorite(parent, true);
+        set({ favorites });
+      }
+    }
+    const favorites = await window.fileAPI.addFavorite(targetPath, isDirectory);
     set({ favorites });
   },
-  removeFavorite: async (folderPath) => {
-    const favorites = await window.fileAPI.removeFavorite(folderPath);
+  removeFavorite: async (targetPath) => {
+    const favorites = await window.fileAPI.removeFavorite(targetPath);
     set({ favorites });
+  },
+  toggleFavorite: async (targetPath, isDirectory) => {
+    const isFavorite = get().favorites.some((f) => f.path === targetPath);
+    if (isFavorite) await get().removeFavorite(targetPath);
+    else await get().addFavorite(targetPath, isDirectory);
   },
   reorderFavorites: async (orderedPaths) => {
     // Apply the new order immediately so dragging feels instant; the

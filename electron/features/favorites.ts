@@ -5,6 +5,7 @@ import * as path from "node:path";
 export interface FavoriteEntry {
   name: string;
   path: string;
+  isDirectory: boolean;
 }
 
 let storePath: string;
@@ -18,7 +19,10 @@ function getStorePath() {
 async function loadStore(): Promise<FavoriteEntry[]> {
   if (cache) return cache;
   try {
-    cache = JSON.parse(await fs.readFile(getStorePath(), "utf8"));
+    const raw: Partial<FavoriteEntry>[] = JSON.parse(await fs.readFile(getStorePath(), "utf8"));
+    // Favorites saved before file-favoriting existed have no isDirectory
+    // field — they were always folders, so default it to true.
+    cache = raw.map((f) => ({ name: f.name ?? path.basename(f.path!), path: f.path!, isDirectory: f.isDirectory ?? true }));
   } catch {
     cache = [];
   }
@@ -32,17 +36,22 @@ async function saveStore() {
 export function registerFavoritesIpc() {
   ipcMain.handle("favorites:list", async () => loadStore());
 
-  ipcMain.handle("favorites:add", async (_e, folderPath: string) => {
+  ipcMain.handle("favorites:add", async (_e, targetPath: string, isDirectory = true) => {
     const store = await loadStore();
-    if (!store.some((f) => f.path === folderPath)) {
-      store.push({ name: path.basename(folderPath) || folderPath, path: folderPath });
+    if (!store.some((f) => f.path === targetPath)) {
+      store.push({ name: path.basename(targetPath) || targetPath, path: targetPath, isDirectory });
       await saveStore();
     }
     return store;
   });
 
-  ipcMain.handle("favorites:remove", async (_e, folderPath: string) => {
-    cache = (await loadStore()).filter((f) => f.path !== folderPath);
+  ipcMain.handle("favorites:remove", async (_e, targetPath: string) => {
+    const store = await loadStore();
+    const removed = store.find((f) => f.path === targetPath);
+    // Removing a favorited folder also drops any favorited files nested
+    // directly inside it, since those files are only shown grouped under
+    // that folder in the sidebar and would otherwise become orphaned.
+    cache = store.filter((f) => f.path !== targetPath && !(removed?.isDirectory && path.dirname(f.path) === targetPath));
     await saveStore();
     return cache;
   });

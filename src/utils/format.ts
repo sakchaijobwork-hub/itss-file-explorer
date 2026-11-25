@@ -19,6 +19,10 @@ export function basename(p: string): string {
   return idx === -1 ? normalized : normalized.slice(idx + 1);
 }
 
+export function dirname(p: string): string {
+  return p.replace(/[/\\][^/\\]+[/\\]?$/, "") || "/";
+}
+
 export function joinPath(...parts: string[]): string {
   const sep = parts[0]?.includes("\\") ? "\\" : "/";
   return parts

@@ -180,6 +180,7 @@ export interface PptxPreview {
 export interface FavoriteEntry {
   name: string;
   path: string;
+  isDirectory: boolean;
 }
 
 export interface DiskSpace {

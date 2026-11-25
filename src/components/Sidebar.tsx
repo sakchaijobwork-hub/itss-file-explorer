@@ -13,6 +13,8 @@ import {
   Monitor,
   FileText,
   Download,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 
 const QUICK_ACCESS_ICONS: Record<string, typeof Home> = {
@@ -22,11 +24,89 @@ const QUICK_ACCESS_ICONS: Record<string, typeof Home> = {
 };
 import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
-import type { ParallelsVm, QuickAccessItem } from "@/types";
-import { formatBytes } from "@/utils/format";
+import { useFileOperations } from "@/hooks/useFileOperations";
+import type { FavoriteEntry, ParallelsVm, QuickAccessItem } from "@/types";
+import { formatBytes, dirname } from "@/utils/format";
+import { getFileIconComponent } from "@/utils/fileIcon";
 import { getDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
 import { ProgressBar } from "@/components/ProgressBar";
 import clsx from "clsx";
+
+function loadExpandedFavFolders(): Set<string> {
+  try {
+    const raw = localStorage.getItem("itss-fav-expanded");
+    return raw ? new Set(JSON.parse(raw)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveExpandedFavFolders(expanded: Set<string>) {
+  try {
+    localStorage.setItem("itss-fav-expanded", JSON.stringify(Array.from(expanded)));
+  } catch {
+    // storage unavailable — expansion state just won't persist across restarts
+  }
+}
+
+function FavoriteFileRow({ fav }: { fav: FavoriteEntry }) {
+  const removeFavorite = useUiStore((s) => s.removeFavorite);
+  const openModal = useUiStore((s) => s.openModal);
+  const { openEntry } = useFileOperations();
+  const extension = fav.name.includes(".") ? (fav.name.split(".").pop() ?? "").toLowerCase() : "";
+  const Icon = getFileIconComponent(extension, false);
+
+  async function showMenu(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const action = await window.fileAPI.showContextMenu([
+      { id: "open", label: "Open" },
+      { id: "showInFolder", label: "Show in Finder/Explorer" },
+      { id: "copyPath", label: "Copy Path" },
+      { id: "properties", label: "Properties…" },
+      { type: "separator", id: "sep1", label: "" },
+      { id: "remove", label: "Remove from Favorites" },
+    ]);
+    switch (action) {
+      case "open":
+        openEntry(fav.path);
+        break;
+      case "showInFolder":
+        window.fileAPI.showInFolder(fav.path);
+        break;
+      case "copyPath":
+        navigator.clipboard.writeText(fav.path);
+        break;
+      case "properties":
+        openModal("properties", [fav.path]);
+        break;
+      case "remove":
+        removeFavorite(fav.path);
+        break;
+    }
+  }
+
+  return (
+    <div
+      onDoubleClick={() => openEntry(fav.path)}
+      onContextMenu={showMenu}
+      title={fav.path}
+      className="group flex w-full items-center gap-2 rounded-md py-1 pl-7 pr-2 text-left text-[13px] text-gray-600 hover:bg-black/5 dark:text-gray-400 dark:hover:bg-white/5"
+    >
+      <Icon className="h-3.5 w-3.5 shrink-0 text-gray-500 dark:text-gray-400" />
+      <span className="truncate">{fav.name}</span>
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          removeFavorite(fav.path);
+        }}
+        className="ml-auto shrink-0 rounded p-0.5 opacity-0 hover:bg-black/10 group-hover:opacity-100 dark:hover:bg-white/10"
+      >
+        <X className="h-3 w-3 hover:text-red-500" />
+      </button>
+    </div>
+  );
+}
 
 function SidebarItem({
   label,
@@ -97,6 +177,7 @@ export function Sidebar() {
   const [favDragOver, setFavDragOver] = useState(false);
   const [draggingFavPath, setDraggingFavPath] = useState<string | null>(null);
   const [dragOverFavPath, setDragOverFavPath] = useState<string | null>(null);
+  const [expandedFavFolders, setExpandedFavFolders] = useState(loadExpandedFavFolders);
   const favorites = useUiStore((s) => s.favorites);
   const loadFavorites = useUiStore((s) => s.loadFavorites);
   const addFavorite = useUiStore((s) => s.addFavorite);
@@ -130,11 +211,21 @@ export function Sidebar() {
     const paths = tracked.length > 0 ? tracked : Array.from(e.dataTransfer.files).map((f) => window.fileAPI.getPathForFile(f));
     for (const p of paths) {
       const info = await window.fileAPI.getInfo(p);
-      if (info?.isDirectory && !favorites.some((fav) => fav.path === p)) {
-        await addFavorite(p);
+      if (info && !favorites.some((fav) => fav.path === p)) {
+        await addFavorite(p, info.isDirectory);
       }
     }
     clearDraggingPaths();
+  }
+
+  function toggleFavFolderExpanded(path: string) {
+    setExpandedFavFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      saveExpandedFavFolders(next);
+      return next;
+    });
   }
 
   function reorderFavoriteTo(targetPath: string) {
@@ -240,43 +331,70 @@ export function Sidebar() {
               {favDragOver ? "Drop to pin this folder" : "Click + or drag a folder here"}
             </div>
           )}
-          {favorites.map((fav) => (
-            <div
-              key={fav.path}
-              draggable
-              onDragStart={(e) => {
-                e.stopPropagation();
-                e.dataTransfer.effectAllowed = "move";
-                setDraggingFavPath(fav.path);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (draggingFavPath) setDragOverFavPath(fav.path);
-              }}
-              onDragLeave={() => setDragOverFavPath((p) => (p === fav.path ? null : p))}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                reorderFavoriteTo(fav.path);
-                setDraggingFavPath(null);
-                setDragOverFavPath(null);
-              }}
-              onDragEnd={() => {
-                setDraggingFavPath(null);
-                setDragOverFavPath(null);
-              }}
-              className={clsx(
-                "rounded-md border-t-2",
-                dragOverFavPath === fav.path && draggingFavPath && draggingFavPath !== fav.path
-                  ? "border-accent"
-                  : "border-transparent",
-                draggingFavPath === fav.path && "opacity-40"
-              )}
-            >
-              <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#eab308" onRemove={() => removeFavorite(fav.path)} />
-            </div>
-          ))}
+          {favorites
+            .filter((fav) => fav.isDirectory)
+            .map((fav) => {
+              const children = favorites.filter((f) => !f.isDirectory && f.path !== fav.path && dirname(f.path) === fav.path);
+              const expanded = expandedFavFolders.has(fav.path);
+              return (
+                <div
+                  key={fav.path}
+                  draggable
+                  onDragStart={(e) => {
+                    e.stopPropagation();
+                    e.dataTransfer.effectAllowed = "move";
+                    setDraggingFavPath(fav.path);
+                  }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (draggingFavPath) setDragOverFavPath(fav.path);
+                  }}
+                  onDragLeave={() => setDragOverFavPath((p) => (p === fav.path ? null : p))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    reorderFavoriteTo(fav.path);
+                    setDraggingFavPath(null);
+                    setDragOverFavPath(null);
+                  }}
+                  onDragEnd={() => {
+                    setDraggingFavPath(null);
+                    setDragOverFavPath(null);
+                  }}
+                  className={clsx(
+                    "rounded-md border-t-2",
+                    dragOverFavPath === fav.path && draggingFavPath && draggingFavPath !== fav.path
+                      ? "border-accent"
+                      : "border-transparent",
+                    draggingFavPath === fav.path && "opacity-40"
+                  )}
+                >
+                  <div className="group flex items-center">
+                    {children.length > 0 ? (
+                      <button
+                        onClick={() => toggleFavFolderExpanded(fav.path)}
+                        title={expanded ? "Collapse" : "Expand"}
+                        className="shrink-0 rounded p-0.5 text-gray-400 hover:bg-black/10 dark:hover:bg-white/10"
+                      >
+                        {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                      </button>
+                    ) : (
+                      <span className="w-[22px] shrink-0" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#eab308" onRemove={() => removeFavorite(fav.path)} />
+                    </div>
+                  </div>
+                  {expanded && children.map((child) => <FavoriteFileRow key={child.path} fav={child} />)}
+                </div>
+              );
+            })}
+          {favorites
+            .filter((fav) => !fav.isDirectory && !favorites.some((f) => f.isDirectory && f.path === dirname(fav.path)))
+            .map((fav) => (
+              <FavoriteFileRow key={fav.path} fav={fav} />
+            ))}
         </div>
       </div>
 

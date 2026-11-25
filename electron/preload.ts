@@ -221,7 +221,8 @@ const api = {
   printFile: (filePath: string): Promise<boolean> => ipcRenderer.invoke("fs:printFile", filePath),
 
   listFavorites: (): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:list"),
-  addFavorite: (folderPath: string): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:add", folderPath),
+  addFavorite: (targetPath: string, isDirectory = true): Promise<FavoriteEntry[]> =>
+    ipcRenderer.invoke("favorites:add", targetPath, isDirectory),
   removeFavorite: (folderPath: string): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:remove", folderPath),
   reorderFavorites: (orderedPaths: string[]): Promise<FavoriteEntry[]> => ipcRenderer.invoke("favorites:reorder", orderedPaths),
 

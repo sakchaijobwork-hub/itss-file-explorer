@@ -58,6 +58,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const loadTags = useUiStore((s) => s.loadTags);
   const openModal = useUiStore((s) => s.openModal);
   const addFavorite = useUiStore((s) => s.addFavorite);
+  const favorites = useUiStore((s) => s.favorites);
   const gridIconSize = useUiStore((s) => s.gridIconSize);
   const activeTab = useFileStore((s) => s.tabs.find((t) => t.id === s.activeTabId));
 
@@ -179,10 +180,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
           {
             id: "addToFavorites",
             label: "Add to Favorites",
-            enabled: selectedList.some((p) => {
-              const e = entries.find((en) => en.path === p);
-              return e?.isDirectory;
-            }),
+            enabled: selectedList.some((p) => !favorites.some((f) => f.path === p)),
           },
           { type: "separator" as const, id: "sep1", label: "" },
           { id: "cut", label: "Cut" },
@@ -410,8 +408,11 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
         if (singlePath) openModal("properties", [singlePath]);
         break;
       case "addToFavorites": {
-        const folders = selectedList.filter((p) => entries.find((en) => en.path === p)?.isDirectory);
-        for (const p of folders) await addFavorite(p);
+        for (const p of selectedList) {
+          if (favorites.some((f) => f.path === p)) continue;
+          const isDir = entries.find((en) => en.path === p)?.isDirectory ?? false;
+          await addFavorite(p, isDir);
+        }
         break;
       }
       case "compress": {
@@ -715,18 +716,16 @@ function TagDots({ tags }: { tags: TagColor[] }) {
   );
 }
 
-function FavoriteStar({ path }: { path: string }) {
+function FavoriteStar({ path, isDirectory }: { path: string; isDirectory: boolean }) {
   const favorites = useUiStore((s) => s.favorites);
-  const addFavorite = useUiStore((s) => s.addFavorite);
-  const removeFavorite = useUiStore((s) => s.removeFavorite);
+  const toggleFavorite = useUiStore((s) => s.toggleFavorite);
   const isFavorite = favorites.some((f) => f.path === path);
 
   return (
     <button
       onClick={(e) => {
         e.stopPropagation();
-        if (isFavorite) removeFavorite(path);
-        else addFavorite(path);
+        toggleFavorite(path, isDirectory);
       }}
       title={isFavorite ? "Remove from Favorites" : "Add to Favorites"}
       className={clsx(
@@ -850,7 +849,7 @@ function FileItem({
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
       >
-        {entry.isDirectory && <FavoriteStar path={entry.path} />}
+        <FavoriteStar path={entry.path} isDirectory={entry.isDirectory} />
         <Thumbnail entry={entry} size={16} IconFallback={Icon} className="shrink-0" />
         {nameNode}
         <TagDots tags={tags} />
@@ -874,7 +873,7 @@ function FileItem({
       onDragEnd={onDragEnd}
     >
       <div className="flex items-center gap-2 overflow-hidden">
-        {entry.isDirectory && <FavoriteStar path={entry.path} />}
+        <FavoriteStar path={entry.path} isDirectory={entry.isDirectory} />
         <Thumbnail entry={entry} size={16} IconFallback={Icon} className="shrink-0" />
         {nameNode}
         <TagDots tags={tags} />
