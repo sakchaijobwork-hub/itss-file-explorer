@@ -75,9 +75,9 @@ export function TabsBar() {
               showTabMenu(tab.id, tab.path, tab.color);
             }}
             className={clsx(
-              "group flex h-7 min-w-[120px] max-w-[180px] items-center gap-1.5 rounded-t-md px-3 text-xs transition-colors",
+              "group relative flex h-7 min-w-[120px] max-w-[180px] items-center gap-1.5 rounded-t-md px-3 text-xs transition-colors",
               tab.id === activeTabId
-                ? "bg-surface-light text-gray-900 dark:bg-surface-dark dark:text-gray-100"
+                ? "bg-surface-light font-medium text-gray-900 shadow-sm after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:rounded-full after:bg-accent after:content-[''] dark:bg-surface-dark dark:text-gray-100"
                 : "text-gray-500 hover:bg-black/5 dark:text-gray-400 dark:hover:bg-white/5"
             )}
           >
