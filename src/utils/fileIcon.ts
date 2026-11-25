@@ -22,7 +22,7 @@ const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "heic"];
 const VIDEO_EXTS = ["mp4", "mov", "mkv", "avi", "webm"];
 const AUDIO_EXTS = ["mp3", "wav", "flac", "aac", "m4a"];
 const ARCHIVE_EXTS = ["zip", "rar", "7z", "tar", "gz", "tgz"];
-const CODE_EXTS = ["js", "ts", "tsx", "jsx", "json", "py", "java", "go", "rs", "html", "css", "c", "cpp", "sh"];
+const CODE_EXTS = ["js", "ts", "tsx", "jsx", "json", "py", "java", "go", "rs", "html", "css", "c", "cpp", "sh", "command"];
 const TEXT_EXTS = ["txt", "md", "rtf", "pages"];
 
 type IconComponent = ComponentType<{ className?: string; style?: CSSProperties; color?: TagColor }>;
