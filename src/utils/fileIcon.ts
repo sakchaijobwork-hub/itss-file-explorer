@@ -12,6 +12,8 @@ import {
   VideoFileIcon,
   AudioFileIcon,
   ArchiveFileIcon,
+  DatabaseIcon,
+  PythonIcon,
   GenericFileIcon,
 } from "@/components/icons/FileTypeIcons";
 
@@ -22,7 +24,9 @@ const IMAGE_EXTS = ["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "heic"];
 const VIDEO_EXTS = ["mp4", "mov", "mkv", "avi", "webm"];
 const AUDIO_EXTS = ["mp3", "wav", "flac", "aac", "m4a"];
 const ARCHIVE_EXTS = ["zip", "rar", "7z", "tar", "gz", "tgz"];
-const CODE_EXTS = ["js", "ts", "tsx", "jsx", "json", "py", "java", "go", "rs", "html", "css", "c", "cpp", "sh", "command", "sql"];
+const CODE_EXTS = ["js", "ts", "tsx", "jsx", "json", "java", "go", "rs", "html", "css", "c", "cpp", "sh", "command"];
+const DATABASE_EXTS = ["sql"];
+const PYTHON_EXTS = ["py"];
 const TEXT_EXTS = ["txt", "md", "rtf", "pages"];
 
 type IconComponent = ComponentType<{ className?: string; style?: CSSProperties; color?: TagColor }>;
@@ -33,6 +37,8 @@ const EXT_MAP: Record<string, IconComponent> = {
   ...Object.fromEntries(AUDIO_EXTS.map((e) => [e, AudioFileIcon])),
   ...Object.fromEntries(ARCHIVE_EXTS.map((e) => [e, ArchiveFileIcon])),
   ...Object.fromEntries(CODE_EXTS.map((e) => [e, CodeFileIcon])),
+  ...Object.fromEntries(DATABASE_EXTS.map((e) => [e, DatabaseIcon])),
+  ...Object.fromEntries(PYTHON_EXTS.map((e) => [e, PythonIcon])),
   ...Object.fromEntries(TEXT_EXTS.map((e) => [e, TextFileIcon])),
   ...Object.fromEntries(XLS_EXTS.map((e) => [e, ExcelIcon])),
   ...Object.fromEntries(PPT_EXTS.map((e) => [e, PowerPointIcon])),
@@ -58,7 +64,7 @@ const KIND_CATEGORIES: { label: string; exts: Set<string> }[] = [
   { label: "Spreadsheets", exts: new Set(XLS_EXTS) },
   { label: "Presentations", exts: new Set(PPT_EXTS) },
   { label: "Archives", exts: new Set(ARCHIVE_EXTS) },
-  { label: "Code", exts: new Set(CODE_EXTS) },
+  { label: "Code", exts: new Set([...CODE_EXTS, ...DATABASE_EXTS, ...PYTHON_EXTS]) },
 ];
 
 export function getKindLabel(extension: string, isDirectory: boolean): string {

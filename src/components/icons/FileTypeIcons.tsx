@@ -129,6 +129,36 @@ export function ArchiveFileIcon(props: BadgeProps) {
   );
 }
 
+export function DatabaseIcon(props: BadgeProps) {
+  return (
+    <SquircleBadge from="#4f8fe0" to="#1e5aa8" {...props}>
+      <path
+        d="M6 8.2c0-1.1 2.69-2 6-2s6 .9 6 2v7.6c0 1.1-2.69 2-6 2s-6-.9-6-2V8.2Z"
+        fill="#fff"
+        opacity="0.92"
+      />
+      <path d="M6 11.3c0 1.1 2.69 2 6 2s6-.9 6-2" fill="none" stroke="#1e5aa8" strokeWidth="1" opacity="0.55" />
+      <path d="M6 14.5c0 1.1 2.69 2 6 2s6-.9 6-2" fill="none" stroke="#1e5aa8" strokeWidth="1" opacity="0.55" />
+      <ellipse cx="12" cy="8.2" rx="6" ry="2" fill="#1e5aa8" />
+    </SquircleBadge>
+  );
+}
+
+export function PythonIcon(props: BadgeProps) {
+  return (
+    <SquircleBadge from="#30353d" to="#14161a" {...props}>
+      <path
+        d="M12 5.1c-3 0-3.3 1.3-3.3 2.9v1.3h3.5v.5H7.3c-1.6 0-2.7 1-2.7 3.2 0 2.2 1.1 3.2 2.5 3.2H8v-1.6c0-1.6 1.3-2.9 2.9-2.9h2.9c1.2 0 2.1-.9 2.1-2.1V8c0-1.6-1.3-2.9-2.9-2.9H12Zm-1.8 1.4c.4 0 .7.3.7.7s-.3.7-.7.7-.7-.3-.7-.7.3-.7.7-.7Z"
+        fill="#4b8bd1"
+      />
+      <path
+        d="M12 18.9c3 0 3.3-1.3 3.3-2.9v-1.3h-3.5v-.5h4.9c1.6 0 2.7-1 2.7-3.2 0-2.2-1.1-3.2-2.5-3.2H16v1.6c0 1.6-1.3 2.9-2.9 2.9h-2.9c-1.2 0-2.1.9-2.1 2.1v2.6c0 1.6 1.3 2.9 2.9 2.9H12Zm1.8-1.4c-.4 0-.7-.3-.7-.7s.3-.7.7-.7.7.3.7.7-.3.7-.7.7Z"
+        fill="#f2c94c"
+      />
+    </SquircleBadge>
+  );
+}
+
 export function GenericFileIcon(props: BadgeProps) {
   return (
     <svg viewBox="0 0 24 24" className={props.className} style={props.style} xmlns="http://www.w3.org/2000/svg">
