@@ -597,6 +597,9 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             iconSize={gridIconSize}
             onSelect={(e) => select(item.entry.path, selectMode(e))}
             onOpen={() => handleOpen(item.entry)}
+            onMiddleClick={() => {
+              if (item.entry.isDirectory) openTab(item.entry.path);
+            }}
             onDragStart={(e) => {
               e.preventDefault();
               const paths = selectedPaths.has(item.entry.path) ? Array.from(selectedPaths) : [item.entry.path];
@@ -747,6 +750,7 @@ function FileItem({
   iconSize = 96,
   onSelect,
   onOpen,
+  onMiddleClick,
   onContextMenu,
   onCommitRename,
   onCancelRename,
@@ -763,6 +767,7 @@ function FileItem({
   iconSize?: number;
   onSelect: (e: React.MouseEvent) => void;
   onOpen: () => void;
+  onMiddleClick: () => void;
   onContextMenu: (e: React.MouseEvent) => void;
   onCommitRename: (value: string) => void;
   onCancelRename: () => void;
@@ -770,6 +775,9 @@ function FileItem({
   onDragEnd: () => void;
 }) {
   const Icon = getFileIconComponent(entry.extension, entry.isDirectory);
+  const handleAuxClick = (e: React.MouseEvent) => {
+    if (e.button === 1) onMiddleClick();
+  };
   const [folderSize, setFolderSize] = useState<{ size: number; capped: boolean } | null>(null);
 
   useEffect(() => {
@@ -813,6 +821,7 @@ function FileItem({
           onSelect(e);
         }}
         onDoubleClick={onOpen}
+        onAuxClick={handleAuxClick}
         onContextMenu={onContextMenu}
         draggable
         onDragStart={onDragStart}
@@ -835,6 +844,7 @@ function FileItem({
           onSelect(e);
         }}
         onDoubleClick={onOpen}
+        onAuxClick={handleAuxClick}
         onContextMenu={onContextMenu}
         draggable
         onDragStart={onDragStart}
@@ -857,6 +867,7 @@ function FileItem({
         onSelect(e);
       }}
       onDoubleClick={onOpen}
+      onAuxClick={handleAuxClick}
       onContextMenu={onContextMenu}
       draggable
       onDragStart={onDragStart}
