@@ -371,17 +371,17 @@ export function Sidebar() {
                   )}
                 >
                   <div className="group flex items-center">
-                    {children.length > 0 ? (
-                      <button
-                        onClick={() => toggleFavFolderExpanded(fav.path)}
-                        title={expanded ? "Collapse" : "Expand"}
-                        className="shrink-0 rounded p-0.5 text-gray-400 hover:bg-black/10 dark:hover:bg-white/10"
-                      >
-                        {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                      </button>
-                    ) : (
-                      <span className="w-[22px] shrink-0" />
-                    )}
+                    <button
+                      onClick={() => children.length > 0 && toggleFavFolderExpanded(fav.path)}
+                      title={children.length > 0 ? (expanded ? "Collapse" : "Expand") : undefined}
+                      tabIndex={children.length > 0 ? 0 : -1}
+                      className={clsx(
+                        "shrink-0 rounded p-0.5 text-gray-400 hover:bg-black/10 dark:hover:bg-white/10",
+                        children.length === 0 && "invisible"
+                      )}
+                    >
+                      {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    </button>
                     <div className="min-w-0 flex-1">
                       <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#eab308" onRemove={() => removeFavorite(fav.path)} />
                     </div>
