@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultSortDirection: "asc",
   showHiddenByDefault: false,
   confirmBeforeTrash: true,
-  themeMode: "dark",
+  themeMode: "light",
 };
 
 const KEY = "itss-settings";
