@@ -58,8 +58,17 @@ export function useFileOperations() {
     const opId = `op-${++opCounter}`;
     const currentPath = getCurrentPath();
     const clipboard = useFileStore.getState().clipboard;
-    if (clipboard.paths.length === 0) {
-      const osPaths = await window.fileAPI.readClipboardFiles();
+    const osPaths = await window.fileAPI.readClipboardFiles();
+    const matchesAppClipboard =
+      clipboard.paths.length > 0 &&
+      osPaths.length === clipboard.paths.length &&
+      osPaths.every((p) => clipboard.paths.includes(p));
+
+    // The OS clipboard is the source of truth: if something outside the app (e.g.
+    // Finder) copied different files since our own copy/cut, our in-app clipboard
+    // state is stale and must not win over it.
+    if (!matchesAppClipboard) {
+      clearClipboard();
       if (osPaths.length === 0) return;
       const createdPaths = await window.fileAPI.copy(osPaths, currentPath, opId);
       if (createdPaths.length === 0) return;
