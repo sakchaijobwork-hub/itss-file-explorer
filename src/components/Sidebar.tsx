@@ -211,18 +211,17 @@ function FavoriteTreeItem({
 
   return (
     <div>
-      <div className="group flex items-center" style={{ paddingLeft: depth * FAV_INDENT_STEP }}>
-        <button
-          onClick={() => children.length > 0 && toggleFavFolderExpanded(fav.path)}
+      <div
+        className="group flex items-center"
+        style={{ paddingLeft: depth * FAV_INDENT_STEP }}
+        onClick={() => children.length > 0 && toggleFavFolderExpanded(fav.path)}
+      >
+        <span
           title={children.length > 0 ? (expanded ? "Collapse" : "Expand") : undefined}
-          tabIndex={children.length > 0 ? 0 : -1}
-          className={clsx(
-            "shrink-0 rounded p-0.5 text-gray-400 hover:bg-black/10 dark:hover:bg-white/10",
-            children.length === 0 && "invisible"
-          )}
+          className={clsx("shrink-0 rounded p-0.5 text-gray-400", children.length === 0 && "invisible")}
         >
           {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        </button>
+        </span>
         <div className="min-w-0 flex-1">
           <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#eab308" onRemove={() => removeFavorite(fav.path)} />
         </div>
