@@ -26,7 +26,7 @@ import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import type { FavoriteEntry, ParallelsVm, QuickAccessItem } from "@/types";
-import { formatBytes } from "@/utils/format";
+import { formatBytes, dirname } from "@/utils/format";
 import { getFileIconComponent } from "@/utils/fileIcon";
 import { getDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -86,9 +86,16 @@ function buildFavoriteTree(favorites: FavoriteEntry[]) {
 function FavoriteFileRow({ fav, depth = 1 }: { fav: FavoriteEntry; depth?: number }) {
   const removeFavorite = useUiStore((s) => s.removeFavorite);
   const openModal = useUiStore((s) => s.openModal);
+  const navigateTo = useFileStore((s) => s.navigateTo);
+  const select = useFileStore((s) => s.select);
   const { openEntry } = useFileOperations();
   const extension = fav.name.includes(".") ? (fav.name.split(".").pop() ?? "").toLowerCase() : "";
   const Icon = getFileIconComponent(extension, false);
+
+  function reveal() {
+    navigateTo(dirname(fav.path));
+    select(fav.path, "single");
+  }
 
   async function showMenu(e: React.MouseEvent) {
     e.preventDefault();
@@ -122,6 +129,7 @@ function FavoriteFileRow({ fav, depth = 1 }: { fav: FavoriteEntry; depth?: numbe
 
   return (
     <div
+      onClick={reveal}
       onDoubleClick={() => openEntry(fav.path)}
       onContextMenu={showMenu}
       title={fav.path}
