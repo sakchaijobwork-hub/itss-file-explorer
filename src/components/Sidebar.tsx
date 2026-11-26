@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Clock,
   HardDrive,
@@ -26,7 +26,7 @@ import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import type { FavoriteEntry, ParallelsVm, QuickAccessItem } from "@/types";
-import { formatBytes, dirname } from "@/utils/format";
+import { formatBytes } from "@/utils/format";
 import { getFileIconComponent } from "@/utils/fileIcon";
 import { getDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -49,7 +49,41 @@ function saveExpandedFavFolders(expanded: Set<string>) {
   }
 }
 
-function FavoriteFileRow({ fav }: { fav: FavoriteEntry }) {
+// A favorite that sits inside another favorited folder anywhere below it
+// (not just as a direct child) is nested under that nearest favorited
+// ancestor instead of appearing as its own separate top-level entry.
+const FAV_INDENT_STEP = 18;
+
+function isDescendantPath(childPath: string, parentPath: string): boolean {
+  if (childPath === parentPath) return false;
+  const normalizedParent = parentPath.replace(/[\\/]+$/, "");
+  const sep = normalizedParent.includes("\\") ? "\\" : "/";
+  return childPath.startsWith(normalizedParent + sep);
+}
+
+function buildFavoriteTree(favorites: FavoriteEntry[]) {
+  const childrenMap = new Map<string, FavoriteEntry[]>();
+  const topLevel: FavoriteEntry[] = [];
+  for (const fav of favorites) {
+    let nearestAncestor: FavoriteEntry | null = null;
+    for (const candidate of favorites) {
+      if (!candidate.isDirectory || candidate.path === fav.path) continue;
+      if (isDescendantPath(fav.path, candidate.path)) {
+        if (!nearestAncestor || candidate.path.length > nearestAncestor.path.length) nearestAncestor = candidate;
+      }
+    }
+    if (nearestAncestor) {
+      const arr = childrenMap.get(nearestAncestor.path) ?? [];
+      arr.push(fav);
+      childrenMap.set(nearestAncestor.path, arr);
+    } else {
+      topLevel.push(fav);
+    }
+  }
+  return { topLevel, childrenMap };
+}
+
+function FavoriteFileRow({ fav, depth = 1 }: { fav: FavoriteEntry; depth?: number }) {
   const removeFavorite = useUiStore((s) => s.removeFavorite);
   const openModal = useUiStore((s) => s.openModal);
   const { openEntry } = useFileOperations();
@@ -91,7 +125,8 @@ function FavoriteFileRow({ fav }: { fav: FavoriteEntry }) {
       onDoubleClick={() => openEntry(fav.path)}
       onContextMenu={showMenu}
       title={fav.path}
-      className="group flex w-full items-center gap-2 rounded-md py-1 pl-7 pr-2 text-left text-[13px] text-gray-600 hover:bg-black/5 dark:text-gray-400 dark:hover:bg-white/5"
+      style={{ paddingLeft: 10 + depth * FAV_INDENT_STEP }}
+      className="group flex w-full items-center gap-2 rounded-md py-1 pr-2 text-left text-[13px] text-gray-600 hover:bg-black/5 dark:text-gray-400 dark:hover:bg-white/5"
     >
       <Icon className="h-3.5 w-3.5 shrink-0 text-gray-500 dark:text-gray-400" />
       <span className="truncate">{fav.name}</span>
@@ -150,6 +185,60 @@ function SidebarItem({
           <X className="h-3 w-3 hover:text-red-500" />
         </button>
       )}
+    </div>
+  );
+}
+
+function FavoriteTreeItem({
+  fav,
+  depth,
+  childrenMap,
+  expandedFavFolders,
+  toggleFavFolderExpanded,
+  removeFavorite,
+}: {
+  fav: FavoriteEntry;
+  depth: number;
+  childrenMap: Map<string, FavoriteEntry[]>;
+  expandedFavFolders: Set<string>;
+  toggleFavFolderExpanded: (path: string) => void;
+  removeFavorite: (path: string) => void;
+}) {
+  if (!fav.isDirectory) return <FavoriteFileRow fav={fav} depth={depth} />;
+
+  const children = childrenMap.get(fav.path) ?? [];
+  const expanded = expandedFavFolders.has(fav.path);
+
+  return (
+    <div>
+      <div className="group flex items-center" style={{ paddingLeft: depth * FAV_INDENT_STEP }}>
+        <button
+          onClick={() => children.length > 0 && toggleFavFolderExpanded(fav.path)}
+          title={children.length > 0 ? (expanded ? "Collapse" : "Expand") : undefined}
+          tabIndex={children.length > 0 ? 0 : -1}
+          className={clsx(
+            "shrink-0 rounded p-0.5 text-gray-400 hover:bg-black/10 dark:hover:bg-white/10",
+            children.length === 0 && "invisible"
+          )}
+        >
+          {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        </button>
+        <div className="min-w-0 flex-1">
+          <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#eab308" onRemove={() => removeFavorite(fav.path)} />
+        </div>
+      </div>
+      {expanded &&
+        children.map((child) => (
+          <FavoriteTreeItem
+            key={child.path}
+            fav={child}
+            depth={depth + 1}
+            childrenMap={childrenMap}
+            expandedFavFolders={expandedFavFolders}
+            toggleFavFolderExpanded={toggleFavFolderExpanded}
+            removeFavorite={removeFavorite}
+          />
+        ))}
     </div>
   );
 }
@@ -227,6 +316,8 @@ export function Sidebar() {
       return next;
     });
   }
+
+  const favoriteTree = useMemo(() => buildFavoriteTree(favorites), [favorites]);
 
   function reorderFavoriteTo(targetPath: string) {
     if (!draggingFavPath || draggingFavPath === targetPath) return;
@@ -331,70 +422,50 @@ export function Sidebar() {
               {favDragOver ? "Drop to pin this folder" : "Click + or drag a folder here"}
             </div>
           )}
-          {favorites
-            .filter((fav) => fav.isDirectory)
-            .map((fav) => {
-              const children = favorites.filter((f) => !f.isDirectory && f.path !== fav.path && dirname(f.path) === fav.path);
-              const expanded = expandedFavFolders.has(fav.path);
-              return (
-                <div
-                  key={fav.path}
-                  draggable
-                  onDragStart={(e) => {
-                    e.stopPropagation();
-                    e.dataTransfer.effectAllowed = "move";
-                    setDraggingFavPath(fav.path);
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (draggingFavPath) setDragOverFavPath(fav.path);
-                  }}
-                  onDragLeave={() => setDragOverFavPath((p) => (p === fav.path ? null : p))}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    reorderFavoriteTo(fav.path);
-                    setDraggingFavPath(null);
-                    setDragOverFavPath(null);
-                  }}
-                  onDragEnd={() => {
-                    setDraggingFavPath(null);
-                    setDragOverFavPath(null);
-                  }}
-                  className={clsx(
-                    "rounded-md border-t-2",
-                    dragOverFavPath === fav.path && draggingFavPath && draggingFavPath !== fav.path
-                      ? "border-accent"
-                      : "border-transparent",
-                    draggingFavPath === fav.path && "opacity-40"
-                  )}
-                >
-                  <div className="group flex items-center">
-                    <button
-                      onClick={() => children.length > 0 && toggleFavFolderExpanded(fav.path)}
-                      title={children.length > 0 ? (expanded ? "Collapse" : "Expand") : undefined}
-                      tabIndex={children.length > 0 ? 0 : -1}
-                      className={clsx(
-                        "shrink-0 rounded p-0.5 text-gray-400 hover:bg-black/10 dark:hover:bg-white/10",
-                        children.length === 0 && "invisible"
-                      )}
-                    >
-                      {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-                    </button>
-                    <div className="min-w-0 flex-1">
-                      <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#eab308" onRemove={() => removeFavorite(fav.path)} />
-                    </div>
-                  </div>
-                  {expanded && children.map((child) => <FavoriteFileRow key={child.path} fav={child} />)}
-                </div>
-              );
-            })}
-          {favorites
-            .filter((fav) => !fav.isDirectory && !favorites.some((f) => f.isDirectory && f.path === dirname(fav.path)))
-            .map((fav) => (
-              <FavoriteFileRow key={fav.path} fav={fav} />
-            ))}
+          {favoriteTree.topLevel.map((fav) => (
+            <div
+              key={fav.path}
+              draggable
+              onDragStart={(e) => {
+                e.stopPropagation();
+                e.dataTransfer.effectAllowed = "move";
+                setDraggingFavPath(fav.path);
+              }}
+              onDragOver={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (draggingFavPath) setDragOverFavPath(fav.path);
+              }}
+              onDragLeave={() => setDragOverFavPath((p) => (p === fav.path ? null : p))}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                reorderFavoriteTo(fav.path);
+                setDraggingFavPath(null);
+                setDragOverFavPath(null);
+              }}
+              onDragEnd={() => {
+                setDraggingFavPath(null);
+                setDragOverFavPath(null);
+              }}
+              className={clsx(
+                "rounded-md border-t-2",
+                dragOverFavPath === fav.path && draggingFavPath && draggingFavPath !== fav.path
+                  ? "border-accent"
+                  : "border-transparent",
+                draggingFavPath === fav.path && "opacity-40"
+              )}
+            >
+              <FavoriteTreeItem
+                fav={fav}
+                depth={0}
+                childrenMap={favoriteTree.childrenMap}
+                expandedFavFolders={expandedFavFolders}
+                toggleFavFolderExpanded={toggleFavFolderExpanded}
+                removeFavorite={removeFavorite}
+              />
+            </div>
+          ))}
         </div>
       </div>
 
