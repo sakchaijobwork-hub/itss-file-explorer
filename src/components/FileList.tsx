@@ -733,7 +733,7 @@ function FavoriteStar({ path, isDirectory }: { path: string; isDirectory: boolea
         !isFavorite && "opacity-0 group-hover:opacity-100"
       )}
     >
-      <Star className="h-3.5 w-3.5" fill={isFavorite ? "#eab308" : "none"} stroke={isFavorite ? "#eab308" : "currentColor"} />
+      <Star className="h-3.5 w-3.5" fill={isFavorite ? "#D98A2B" : "none"} stroke={isFavorite ? "#D98A2B" : "currentColor"} />
     </button>
   );
 }

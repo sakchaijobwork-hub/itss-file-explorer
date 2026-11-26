@@ -5,26 +5,37 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // "Wayfinder" palette — a warm signal amber (the same gold already
+        // used for favorites) replaces the generic default-blue accent,
+        // with a cool slate-navy base and a muted teal for secondary cues.
         accent: {
-          DEFAULT: "#3b82f6",
-          hover: "#2563eb",
+          DEFAULT: "#D98A2B",
+          hover: "#B9711A",
+        },
+        compass: {
+          DEFAULT: "#3A7D79",
+          hover: "#2E6460",
         },
         surface: {
-          light: "#ffffff",
-          dark: "#1e1e1e",
+          light: "#FCFBF8",
+          dark: "#141A22",
         },
         panel: {
-          light: "#f5f5f7",
-          dark: "#252526",
+          light: "#F0EEE7",
+          dark: "#1B222B",
         },
+      },
+      fontFamily: {
+        sans: ["Figtree", "-apple-system", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],
+        mono: ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       borderRadius: {
         lg: "10px",
       },
       keyframes: {
         "paste-flash": {
-          "0%, 40%": { backgroundColor: "rgba(59, 130, 246, 0.35)" },
-          "100%": { backgroundColor: "rgba(59, 130, 246, 0)" },
+          "0%, 40%": { backgroundColor: "rgba(217, 138, 43, 0.35)" },
+          "100%": { backgroundColor: "rgba(217, 138, 43, 0)" },
         },
       },
       animation: {

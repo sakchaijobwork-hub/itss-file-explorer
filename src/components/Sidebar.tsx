@@ -231,7 +231,7 @@ function FavoriteTreeItem({
           {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
         </span>
         <div className="min-w-0 flex-1">
-          <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#eab308" onRemove={() => removeFavorite(fav.path)} />
+          <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#D98A2B" onRemove={() => removeFavorite(fav.path)} />
         </div>
       </div>
       {expanded &&
