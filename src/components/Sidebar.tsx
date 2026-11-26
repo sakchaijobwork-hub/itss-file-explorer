@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Clock,
   HardDrive,
@@ -26,7 +26,7 @@ import { useFileStore } from "@/store/useFileStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useFileOperations } from "@/hooks/useFileOperations";
 import type { FavoriteEntry, ParallelsVm, QuickAccessItem } from "@/types";
-import { formatBytes, dirname, basename } from "@/utils/format";
+import { formatBytes, dirname } from "@/utils/format";
 import { getFileIconComponent } from "@/utils/fileIcon";
 import { getDraggingPaths, clearDraggingPaths } from "@/utils/dragState";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -49,7 +49,7 @@ function saveExpandedFavFolders(expanded: Set<string>) {
   }
 }
 
-function FavoriteFileRow({ fav, hint }: { fav: FavoriteEntry; hint?: string }) {
+function FavoriteFileRow({ fav }: { fav: FavoriteEntry }) {
   const removeFavorite = useUiStore((s) => s.removeFavorite);
   const openModal = useUiStore((s) => s.openModal);
   const { openEntry } = useFileOperations();
@@ -95,7 +95,6 @@ function FavoriteFileRow({ fav, hint }: { fav: FavoriteEntry; hint?: string }) {
     >
       <Icon className="h-3.5 w-3.5 shrink-0 text-gray-500 dark:text-gray-400" />
       <span className="truncate">{fav.name}</span>
-      {hint && <span className="shrink-0 truncate text-[10px] text-gray-400 dark:text-gray-500">— {hint}</span>}
       <button
         onClick={(e) => {
           e.stopPropagation();
@@ -114,14 +113,12 @@ function SidebarItem({
   path,
   icon: Icon,
   iconFill,
-  hint,
   onRemove,
 }: {
   label: string;
   path: string;
   icon: typeof Home;
   iconFill?: string;
-  hint?: string;
   onRemove?: () => void;
 }) {
   const navigateTo = useFileStore((s) => s.navigateTo);
@@ -140,7 +137,6 @@ function SidebarItem({
       <button onClick={() => navigateTo(path)} title={path} className="flex min-w-0 flex-1 items-center gap-2 text-left">
         <Icon className="h-4 w-4 shrink-0" fill={iconFill} />
         <span className="truncate">{label}</span>
-        {hint && <span className="shrink-0 truncate text-[10px] text-gray-400 dark:text-gray-500">— {hint}</span>}
       </button>
       {onRemove && (
         <button
@@ -231,24 +227,6 @@ export function Sidebar() {
       return next;
     });
   }
-
-  // Favorites of the same name (e.g. a "scripts" folder pinned from two
-  // different projects) are otherwise indistinguishable at a glance, so
-  // any favorite sharing its name with another gets its parent folder
-  // name shown alongside it as a disambiguating hint.
-  const favNameHints = useMemo(() => {
-    const topLevel = [
-      ...favorites.filter((f) => f.isDirectory),
-      ...favorites.filter((f) => !f.isDirectory && !favorites.some((p) => p.isDirectory && p.path === dirname(f.path))),
-    ];
-    const counts = new Map<string, number>();
-    for (const f of topLevel) counts.set(f.name, (counts.get(f.name) ?? 0) + 1);
-    const hints = new Map<string, string>();
-    for (const f of topLevel) {
-      if ((counts.get(f.name) ?? 0) > 1) hints.set(f.path, basename(dirname(f.path)));
-    }
-    return hints;
-  }, [favorites]);
 
   function reorderFavoriteTo(targetPath: string) {
     if (!draggingFavPath || draggingFavPath === targetPath) return;
@@ -405,14 +383,7 @@ export function Sidebar() {
                       {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
                     </button>
                     <div className="min-w-0 flex-1">
-                      <SidebarItem
-                        label={fav.name}
-                        path={fav.path}
-                        icon={Star}
-                        iconFill="#eab308"
-                        hint={favNameHints.get(fav.path)}
-                        onRemove={() => removeFavorite(fav.path)}
-                      />
+                      <SidebarItem label={fav.name} path={fav.path} icon={Star} iconFill="#eab308" onRemove={() => removeFavorite(fav.path)} />
                     </div>
                   </div>
                   {expanded && children.map((child) => <FavoriteFileRow key={child.path} fav={child} />)}
@@ -422,7 +393,7 @@ export function Sidebar() {
           {favorites
             .filter((fav) => !fav.isDirectory && !favorites.some((f) => f.isDirectory && f.path === dirname(fav.path)))
             .map((fav) => (
-              <FavoriteFileRow key={fav.path} fav={fav} hint={favNameHints.get(fav.path)} />
+              <FavoriteFileRow key={fav.path} fav={fav} />
             ))}
         </div>
       </div>
