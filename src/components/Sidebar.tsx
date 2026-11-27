@@ -204,6 +204,11 @@ function FavoriteTreeItem({
   expandedFavFolders,
   toggleFavFolderExpanded,
   removeFavorite,
+  draggingFavPath,
+  dragOverFavPath,
+  setDraggingFavPath,
+  setDragOverFavPath,
+  reorderFavoriteTo,
 }: {
   fav: FavoriteEntry;
   depth: number;
@@ -211,6 +216,11 @@ function FavoriteTreeItem({
   expandedFavFolders: Set<string>;
   toggleFavFolderExpanded: (path: string) => void;
   removeFavorite: (path: string) => void;
+  draggingFavPath: string | null;
+  dragOverFavPath: string | null;
+  setDraggingFavPath: (path: string | null) => void;
+  setDragOverFavPath: (updater: (p: string | null) => string | null) => void;
+  reorderFavoriteTo: (targetPath: string) => void;
 }) {
   if (!fav.isDirectory) return <FavoriteFileRow fav={fav} depth={depth} />;
 
@@ -218,7 +228,38 @@ function FavoriteTreeItem({
   const expanded = expandedFavFolders.has(fav.path);
 
   return (
-    <div>
+    <div
+      draggable
+      onDragStart={(e) => {
+        e.stopPropagation();
+        e.dataTransfer.effectAllowed = "move";
+        setDraggingFavPath(fav.path);
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (draggingFavPath) setDragOverFavPath(() => fav.path);
+      }}
+      onDragLeave={() => setDragOverFavPath((p) => (p === fav.path ? null : p))}
+      onDrop={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        reorderFavoriteTo(fav.path);
+        setDraggingFavPath(null);
+        setDragOverFavPath(() => null);
+      }}
+      onDragEnd={() => {
+        setDraggingFavPath(null);
+        setDragOverFavPath(() => null);
+      }}
+      className={clsx(
+        "rounded-md border-t-2",
+        dragOverFavPath === fav.path && draggingFavPath && draggingFavPath !== fav.path
+          ? "border-accent"
+          : "border-transparent",
+        draggingFavPath === fav.path && "opacity-40"
+      )}
+    >
       <div
         className="group flex items-center"
         style={{ paddingLeft: depth * FAV_INDENT_STEP }}
@@ -244,6 +285,11 @@ function FavoriteTreeItem({
             expandedFavFolders={expandedFavFolders}
             toggleFavFolderExpanded={toggleFavFolderExpanded}
             removeFavorite={removeFavorite}
+            draggingFavPath={draggingFavPath}
+            dragOverFavPath={dragOverFavPath}
+            setDraggingFavPath={setDraggingFavPath}
+            setDragOverFavPath={setDragOverFavPath}
+            reorderFavoriteTo={reorderFavoriteTo}
           />
         ))}
     </div>
@@ -430,48 +476,20 @@ export function Sidebar() {
             </div>
           )}
           {favoriteTree.topLevel.map((fav) => (
-            <div
+            <FavoriteTreeItem
               key={fav.path}
-              draggable
-              onDragStart={(e) => {
-                e.stopPropagation();
-                e.dataTransfer.effectAllowed = "move";
-                setDraggingFavPath(fav.path);
-              }}
-              onDragOver={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                if (draggingFavPath) setDragOverFavPath(fav.path);
-              }}
-              onDragLeave={() => setDragOverFavPath((p) => (p === fav.path ? null : p))}
-              onDrop={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                reorderFavoriteTo(fav.path);
-                setDraggingFavPath(null);
-                setDragOverFavPath(null);
-              }}
-              onDragEnd={() => {
-                setDraggingFavPath(null);
-                setDragOverFavPath(null);
-              }}
-              className={clsx(
-                "rounded-md border-t-2",
-                dragOverFavPath === fav.path && draggingFavPath && draggingFavPath !== fav.path
-                  ? "border-accent"
-                  : "border-transparent",
-                draggingFavPath === fav.path && "opacity-40"
-              )}
-            >
-              <FavoriteTreeItem
-                fav={fav}
-                depth={0}
-                childrenMap={favoriteTree.childrenMap}
-                expandedFavFolders={expandedFavFolders}
-                toggleFavFolderExpanded={toggleFavFolderExpanded}
-                removeFavorite={removeFavorite}
-              />
-            </div>
+              fav={fav}
+              depth={0}
+              childrenMap={favoriteTree.childrenMap}
+              expandedFavFolders={expandedFavFolders}
+              toggleFavFolderExpanded={toggleFavFolderExpanded}
+              removeFavorite={removeFavorite}
+              draggingFavPath={draggingFavPath}
+              dragOverFavPath={dragOverFavPath}
+              setDraggingFavPath={setDraggingFavPath}
+              setDragOverFavPath={setDragOverFavPath}
+              reorderFavoriteTo={reorderFavoriteTo}
+            />
           ))}
         </div>
       </div>
