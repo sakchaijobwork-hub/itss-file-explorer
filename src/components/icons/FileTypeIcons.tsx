@@ -163,12 +163,12 @@ export function GenericFileIcon(props: BadgeProps) {
   return (
     <svg viewBox="0 0 24 24" className={props.className} style={props.style} xmlns="http://www.w3.org/2000/svg">
       <path
-        d="M5 2.5h8.5l5 5V21a0.5 0.5 0 0 1-0.5 0.5H5a0.5 0.5 0 0 1-0.5-0.5V3a0.5 0.5 0 0 1 0.5-0.5z"
-        fill="#eef1f5"
-        stroke="#c3cad3"
-        strokeWidth="0.8"
+        d="M4 1.5h11l5 5V22.5a0.5 0.5 0 0 1-0.5 0.5H4.5a0.5 0.5 0 0 1-0.5-0.5V2a0.5 0.5 0 0 1 0.5-0.5z"
+        fill="#e4e8ee"
+        stroke="#a7b0bc"
+        strokeWidth="1"
       />
-      <path d="M13.5 2.5V7a0.5 0.5 0 0 0 0.5 0.5h4.5" fill="none" stroke="#c3cad3" strokeWidth="0.8" />
+      <path d="M15 1.5V6a0.5 0.5 0 0 0 0.5 0.5H20" fill="none" stroke="#a7b0bc" strokeWidth="1" />
     </svg>
   );
 }
