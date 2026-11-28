@@ -104,6 +104,11 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const rowElsRef = useRef(new Map<string, HTMLDivElement>());
   const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
   const marqueeStateRef = useRef<{ x0: number; y0: number; baseSelection: Set<string>; additive: boolean } | null>(null);
+  // While true, the click that immediately follows a mouseup is suppressed —
+  // it's the tail end of a marquee drag, not a real click, and must not
+  // re-trigger row/empty-space click selection logic on top of it.
+  const suppressNextClickRef = useRef(false);
+  const DRAG_THRESHOLD = 4;
 
   function registerRowEl(path: string, el: HTMLDivElement | null) {
     if (el) rowElsRef.current.set(path, el);
@@ -125,6 +130,9 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     function onMove(ev: MouseEvent) {
       const state = marqueeStateRef.current;
       if (!state) return;
+      if (Math.abs(ev.clientX - state.x0) > DRAG_THRESHOLD || Math.abs(ev.clientY - state.y0) > DRAG_THRESHOLD) {
+        suppressNextClickRef.current = true;
+      }
       setMarquee({ x0: state.x0, y0: state.y0, x1: ev.clientX, y1: ev.clientY });
       const left = Math.min(state.x0, ev.clientX);
       const right = Math.max(state.x0, ev.clientX);
@@ -142,9 +150,17 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       setMarquee(null);
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("mouseup", onUp);
+      // The browser's click event (if any) fires synchronously right after
+      // mouseup, before this timeout — so it still sees the flag as true.
+      if (suppressNextClickRef.current) setTimeout(() => (suppressNextClickRef.current = false), 0);
     }
     window.addEventListener("mousemove", onMove);
     window.addEventListener("mouseup", onUp);
+  }
+
+  function handleEmptySpaceClick() {
+    if (suppressNextClickRef.current) return;
+    clearSelection();
   }
 
   const typeAheadRef = useRef({ buffer: "", lastTime: 0 });
@@ -607,7 +623,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   return (
     <div
       className="flex-1 overflow-y-auto p-2"
-      onClick={clearSelection}
+      onClick={handleEmptySpaceClick}
       onMouseDown={startMarquee}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -620,7 +636,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     >
       {marquee && (
         <div
-          className="fixed z-50 border border-accent bg-accent/15"
+          className="pointer-events-none fixed z-50 border border-accent bg-accent/15"
           style={{
             left: Math.min(marquee.x0, marquee.x1),
             top: Math.min(marquee.y0, marquee.y1),
@@ -661,7 +677,10 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             tags={tagsMap[item.entry.path] ?? []}
             iconSize={gridIconSize}
             rowRef={(el) => registerRowEl(item.entry.path, el)}
-            onSelect={(e) => select(item.entry.path, selectMode(e), visibleOrderedPaths)}
+            onSelect={(e) => {
+              if (suppressNextClickRef.current) return;
+              select(item.entry.path, selectMode(e), visibleOrderedPaths);
+            }}
             onOpen={() => handleOpen(item.entry)}
             onMiddleClick={() => {
               if (item.entry.isDirectory) openTab(item.entry.path);
