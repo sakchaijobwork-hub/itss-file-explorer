@@ -51,7 +51,7 @@ interface FileStoreState {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 
-  select: (path: string, mode: "single" | "toggle" | "range") => void;
+  select: (path: string, mode: "single" | "toggle" | "range", orderedPaths?: string[]) => void;
   selectAll: () => void;
   clearSelection: () => void;
 
@@ -210,7 +210,7 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
 
-  select: (path, mode) => {
+  select: (path, mode, orderedPaths) => {
     set((s) => {
       const next = new Set(s.selectedPaths);
       if (mode === "single") {
@@ -220,7 +220,10 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
         if (next.has(path)) next.delete(path);
         else next.add(path);
       } else if (mode === "range" && s.lastSelectedPath) {
-        const paths = s.entries.map((e) => e.path);
+        // Range selection must follow the order the user actually sees
+        // (sorted/filtered), not the store's raw, unsorted entries —
+        // otherwise shift-click can span the wrong set of rows entirely.
+        const paths = orderedPaths ?? s.entries.map((e) => e.path);
         const a = paths.indexOf(s.lastSelectedPath);
         const b = paths.indexOf(path);
         if (a !== -1 && b !== -1) {

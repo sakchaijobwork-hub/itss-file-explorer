@@ -95,6 +95,11 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     return items;
   }, [visibleEntries, groupByKind]);
 
+  const visibleOrderedPaths = useMemo(
+    () => renderItems.filter((item) => item.kind === "entry").map((item) => item.entry.path),
+    [renderItems]
+  );
+
   const typeAheadRef = useRef({ buffer: "", lastTime: 0 });
 
   useEffect(() => {
@@ -596,7 +601,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             isRenaming={renamingPath === item.entry.path}
             tags={tagsMap[item.entry.path] ?? []}
             iconSize={gridIconSize}
-            onSelect={(e) => select(item.entry.path, selectMode(e))}
+            onSelect={(e) => select(item.entry.path, selectMode(e), visibleOrderedPaths)}
             onOpen={() => handleOpen(item.entry)}
             onMiddleClick={() => {
               if (item.entry.isDirectory) openTab(item.entry.path);
