@@ -54,6 +54,7 @@ interface FileStoreState {
   select: (path: string, mode: "single" | "toggle" | "range", orderedPaths?: string[]) => void;
   selectAll: () => void;
   clearSelection: () => void;
+  setSelectedPaths: (paths: Iterable<string>) => void;
 
   setClipboard: (mode: "copy" | "cut", paths: string[]) => void;
   clearClipboard: () => void;
@@ -239,6 +240,7 @@ export const useFileStore = create<FileStoreState>((set, get) => ({
 
   selectAll: () => set((s) => ({ selectedPaths: new Set(s.entries.map((e) => e.path)) })),
   clearSelection: () => set({ selectedPaths: new Set(), lastSelectedPath: null }),
+  setSelectedPaths: (paths) => set({ selectedPaths: new Set(paths) }),
 
   setClipboard: (mode, paths) => set({ clipboard: { mode, paths } }),
   clearClipboard: () => set({ clipboard: { mode: null, paths: [] } }),

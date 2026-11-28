@@ -45,6 +45,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
   const selectedPaths = useFileStore((s) => s.selectedPaths);
   const select = useFileStore((s) => s.select);
   const clearSelection = useFileStore((s) => s.clearSelection);
+  const setSelectedPaths = useFileStore((s) => s.setSelectedPaths);
   const renamingPath = useFileStore((s) => s.renamingPath);
   const startRename = useFileStore((s) => s.startRename);
   const endRename = useFileStore((s) => s.endRename);
@@ -99,6 +100,52 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     () => renderItems.filter((item) => item.kind === "entry").map((item) => item.entry.path),
     [renderItems]
   );
+
+  const rowElsRef = useRef(new Map<string, HTMLDivElement>());
+  const [marquee, setMarquee] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
+  const marqueeStateRef = useRef<{ x0: number; y0: number; baseSelection: Set<string>; additive: boolean } | null>(null);
+
+  function registerRowEl(path: string, el: HTMLDivElement | null) {
+    if (el) rowElsRef.current.set(path, el);
+    else rowElsRef.current.delete(path);
+  }
+
+  function startMarquee(e: React.MouseEvent) {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('[data-role="file-row"]')) return;
+    const additive = e.shiftKey || e.metaKey || e.ctrlKey;
+    marqueeStateRef.current = {
+      x0: e.clientX,
+      y0: e.clientY,
+      baseSelection: additive ? new Set(selectedPaths) : new Set(),
+      additive,
+    };
+    setMarquee({ x0: e.clientX, y0: e.clientY, x1: e.clientX, y1: e.clientY });
+
+    function onMove(ev: MouseEvent) {
+      const state = marqueeStateRef.current;
+      if (!state) return;
+      setMarquee({ x0: state.x0, y0: state.y0, x1: ev.clientX, y1: ev.clientY });
+      const left = Math.min(state.x0, ev.clientX);
+      const right = Math.max(state.x0, ev.clientX);
+      const top = Math.min(state.y0, ev.clientY);
+      const bottom = Math.max(state.y0, ev.clientY);
+      const next = new Set(state.baseSelection);
+      for (const [path, el] of rowElsRef.current) {
+        const r = el.getBoundingClientRect();
+        if (r.left < right && r.right > left && r.top < bottom && r.bottom > top) next.add(path);
+      }
+      setSelectedPaths(next);
+    }
+    function onUp() {
+      marqueeStateRef.current = null;
+      setMarquee(null);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    }
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  }
 
   const typeAheadRef = useRef({ buffer: "", lastTime: 0 });
 
@@ -561,6 +608,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
     <div
       className="flex-1 overflow-y-auto p-2"
       onClick={clearSelection}
+      onMouseDown={startMarquee}
       onContextMenu={(e) => {
         e.preventDefault();
         if (e.target === e.currentTarget) showContextMenu(null);
@@ -570,6 +618,17 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
       }}
       onDrop={handleDrop}
     >
+      {marquee && (
+        <div
+          className="fixed z-50 border border-accent bg-accent/15"
+          style={{
+            left: Math.min(marquee.x0, marquee.x1),
+            top: Math.min(marquee.y0, marquee.y1),
+            width: Math.abs(marquee.x1 - marquee.x0),
+            height: Math.abs(marquee.y1 - marquee.y0),
+          }}
+        />
+      )}
       {viewMode === "details" && (
         <DetailsHeader sortKey={sortKey} sortDirection={sortDirection} onSort={setSort} />
       )}
@@ -601,6 +660,7 @@ export function FileList({ searchQuery }: { searchQuery: string }) {
             isRenaming={renamingPath === item.entry.path}
             tags={tagsMap[item.entry.path] ?? []}
             iconSize={gridIconSize}
+            rowRef={(el) => registerRowEl(item.entry.path, el)}
             onSelect={(e) => select(item.entry.path, selectMode(e), visibleOrderedPaths)}
             onOpen={() => handleOpen(item.entry)}
             onMiddleClick={() => {
@@ -760,6 +820,7 @@ function FileItem({
   onCancelRename,
   onDragStart,
   onDragEnd,
+  rowRef,
 }: {
   entry: FileEntry;
   viewMode: ViewMode;
@@ -777,6 +838,7 @@ function FileItem({
   onCancelRename: () => void;
   onDragStart: (e: React.DragEvent) => void;
   onDragEnd: () => void;
+  rowRef?: (el: HTMLDivElement | null) => void;
 }) {
   const Icon = getFileIconComponent(entry.extension, entry.isDirectory);
   const handleAuxClick = (e: React.MouseEvent) => {
@@ -819,6 +881,9 @@ function FileItem({
   if (viewMode === "grid") {
     return (
       <div
+        ref={rowRef}
+        data-role="file-row"
+        data-path={entry.path}
         className={clsx(baseClasses, "flex flex-col items-center gap-1 p-2 text-center")}
         onClick={(e) => {
           e.stopPropagation();
@@ -842,6 +907,9 @@ function FileItem({
   if (viewMode === "list") {
     return (
       <div
+        ref={rowRef}
+        data-role="file-row"
+        data-path={entry.path}
         className={clsx(baseClasses, "flex items-center gap-2 px-2 py-1 text-[13px] text-gray-800 dark:text-gray-200")}
         onClick={(e) => {
           e.stopPropagation();
@@ -865,6 +933,9 @@ function FileItem({
   // details
   return (
     <div
+      ref={rowRef}
+      data-role="file-row"
+      data-path={entry.path}
       className={clsx(baseClasses, "grid grid-cols-[1fr_100px_160px_80px] items-center px-2 py-1 text-[13px] text-gray-800 dark:text-gray-200")}
       onClick={(e) => {
         e.stopPropagation();
